@@ -20,6 +20,7 @@ import UserManagementPage from "./pages/UserManagementPage";
 import BulkImportPage from "./pages/BulkImportPage";
 import ImportHistoryPage from "./pages/ImportHistoryPage";
 import NotFound from "./pages/NotFound";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={
               <ProtectedRoute>
                 <AppLayout>

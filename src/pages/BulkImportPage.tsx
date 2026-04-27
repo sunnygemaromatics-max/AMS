@@ -99,12 +99,22 @@ export default function BulkImportPage() {
       const name = pick(r, ["name", "employee_name", "full_name"]);
       if (!code) { out.errors.push({ row: rowNum, column: "employee_code", message: "missing required value" }); continue; }
       if (!name) { out.errors.push({ row: rowNum, column: "name", message: "missing required value" }); continue; }
-      const payload = {
-        employee_code: code, name,
-        email: pick(r, ["email", "email_id"]) || null,
-        phone: pick(r, ["phone", "mobile"])?.toString() || null,
-        department: pick(r, ["department", "dept"]) || "General",
-        designation: pick(r, ["designation", "role", "title"]) || null,
+      const payload: any = {
+        employee_code: code,
+        name,
+        email:       pick(r, ["email", "email_id", "work_email"]) || null,
+        phone:       pick(r, ["phone", "mobile", "contact"])?.toString() || null,
+        department:  pick(r, ["department", "dept"]) || "General",
+        designation: pick(r, ["designation", "title", "job_title"]) || null,
+        role:        pick(r, ["role", "system_role"]) || null,
+        // New enhanced fields
+        reporting_manager: pick(r, ["reporting_manager", "manager", "reports_to", "line_manager"]) || null,
+        employee_type:     pick(r, ["employee_type", "emp_type", "type", "employment_type"]) || "full_time",
+        access_level:      pick(r, ["access_level", "access"]) || "standard",
+        emergency_contact: pick(r, ["emergency_contact", "emergency"]) || null,
+        secondary_email:   pick(r, ["secondary_email", "personal_email"]) || null,
+        work_location:     pick(r, ["work_location", "office", "office_location"]) || null,
+        date_of_joining:   pick(r, ["date_of_joining", "doj", "joining_date", "start_date"]) || null,
       };
       const existing = existingMap.get(code.toLowerCase());
       if (existing) {
@@ -372,8 +382,8 @@ export default function BulkImportPage() {
                 key: "employees", icon: Users, title: "Employees",
                 file: "/templates/template_employees.xlsx",
                 required: ["employee_code", "name", "department"],
-                optional: ["email", "phone", "designation"],
-                links: "Master list. Assets & Licenses link by NAME (case-insensitive).",
+                optional: ["designation", "role", "email", "phone", "reporting_manager", "employee_type", "access_level", "date_of_joining", "work_location", "emergency_contact", "secondary_email"],
+                links: "Master list. Assets & Licenses link by NAME (case-insensitive). employee_type: full_time | part_time | contractor | intern | temporary.",
               },
               {
                 key: "assets", icon: Package, title: "Assets",
