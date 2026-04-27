@@ -1,66 +1,93 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "next-themes";
 import { AppLayout } from "@/components/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute, AdminRoute } from "@/components/ProtectedRoute";
-import DashboardPage from "./pages/DashboardPage";
-import AssetsPage from "./pages/AssetsPage";
-import AssetDetailPage from "./pages/AssetDetailPage";
-import BinCardsPage from "./pages/BinCardsPage";
-import EmployeesPage from "./pages/EmployeesPage";
-import LocationsPage from "./pages/LocationsPage";
-import LicensesPage from "./pages/LicensesPage";
-import SettingsPage from "./pages/SettingsPage";
-import OrganisationSettingsPage from "./pages/OrganisationSettingsPage";
-import AuthPage from "./pages/AuthPage";
-import UserManagementPage from "./pages/UserManagementPage";
-import BulkImportPage from "./pages/BulkImportPage";
-import ImportHistoryPage from "./pages/ImportHistoryPage";
-import NotFound from "./pages/NotFound";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+// Eagerly load auth pages (not behind auth wall)
+import AuthPage from "./pages/AuthPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import NotFound from "./pages/NotFound";
+
+// Lazy load all protected pages for better initial load performance
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const AssetsPage = lazy(() => import("./pages/AssetsPage"));
+const AssetDetailPage = lazy(() => import("./pages/AssetDetailPage"));
+const BinCardsPage = lazy(() => import("./pages/BinCardsPage"));
+const EmployeesPage = lazy(() => import("./pages/EmployeesPage"));
+const LocationsPage = lazy(() => import("./pages/LocationsPage"));
+const LicensesPage = lazy(() => import("./pages/LicensesPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const OrganisationSettingsPage = lazy(() => import("./pages/OrganisationSettingsPage"));
+const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
+const BulkImportPage = lazy(() => import("./pages/BulkImportPage"));
+const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage"));
+const ActivityPage = lazy(() => import("./pages/ActivityPage"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 2, staleTime: 30_000 },
+  },
+});
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
+}
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-            <Route path="*" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Routes>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/assets" element={<AssetsPage />} />
-                    <Route path="/assets/:id" element={<AssetDetailPage />} />
-                    <Route path="/bin-cards" element={<BinCardsPage />} />
-                    <Route path="/employees" element={<EmployeesPage />} />
-                    <Route path="/locations" element={<LocationsPage />} />
-                    <Route path="/licenses" element={<LicensesPage />} />
-                    <Route path="/import" element={<BulkImportPage />} />
-                    <Route path="/import/history" element={<ImportHistoryPage />} />
-                    <Route path="/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
-                    <Route path="/companies" element={<SettingsPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/organisation" element={<OrganisationSettingsPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="ams-theme">
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+              <Route path="*" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ErrorBoundary>
+                      <Suspense fallback={<PageLoader />}>
+                        <Routes>
+                          <Route path="/" element={<DashboardPage />} />
+                          <Route path="/assets" element={<AssetsPage />} />
+                          <Route path="/assets/:id" element={<AssetDetailPage />} />
+                          <Route path="/bin-cards" element={<BinCardsPage />} />
+                          <Route path="/employees" element={<EmployeesPage />} />
+                          <Route path="/locations" element={<LocationsPage />} />
+                          <Route path="/licenses" element={<LicensesPage />} />
+                          <Route path="/import" element={<BulkImportPage />} />
+                          <Route path="/import/history" element={<ImportHistoryPage />} />
+                          <Route path="/activity" element={<ActivityPage />} />
+                          <Route path="/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
+                          <Route path="/companies" element={<SettingsPage />} />
+                          <Route path="/settings" element={<SettingsPage />} />
+                          <Route path="/organisation" element={<OrganisationSettingsPage />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </Suspense>
+                    </ErrorBoundary>
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

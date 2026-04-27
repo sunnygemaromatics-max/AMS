@@ -11,6 +11,7 @@ import {
   History,
   Shield,
   Briefcase,
+  Activity,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -41,6 +42,7 @@ const mainNav = [
 const dataNav = [
   { title: "Bulk Import", url: "/import", icon: Upload },
   { title: "Import History", url: "/import/history", icon: History },
+  { title: "Activity Timeline", url: "/activity", icon: Activity },
 ];
 
 const systemNav = [
@@ -71,11 +73,18 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-              <Package className="h-5 w-5 text-sidebar-primary-foreground" />
+              <span className="text-sidebar-primary-foreground font-extrabold text-xs tracking-tight">TSI</span>
             </div>
             <div>
               <p className="font-bold text-sm text-sidebar-foreground">AMS</p>
               <p className="text-xs text-sidebar-foreground/60">Asset Management</p>
+            </div>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center">
+            <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
+              <span className="text-sidebar-primary-foreground font-extrabold text-[10px] tracking-tight">TSI</span>
             </div>
           </div>
         )}
@@ -159,8 +168,13 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-4">
         {!collapsed && (
-          <div className="text-xs text-sidebar-foreground/40">
-            v2.0 • Enterprise AMS
+          <div className="space-y-0.5">
+            <p className="text-[10px] text-sidebar-foreground/50 font-medium uppercase tracking-widest">
+              Personify Crafters
+            </p>
+            <p className="text-[10px] text-sidebar-foreground/30">
+              v2.0 Enterprise AMS
+            </p>
           </div>
         )}
       </SidebarFooter>
