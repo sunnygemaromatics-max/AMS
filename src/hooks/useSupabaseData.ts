@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
+// ─── Core types from generated schema ────────────────────────────────────────
 type Asset = Database["public"]["Tables"]["assets"]["Row"];
 type AssetInsert = Database["public"]["Tables"]["assets"]["Insert"];
 type Employee = Database["public"]["Tables"]["employees"]["Row"];
@@ -21,9 +22,38 @@ type DepartmentInsert = Database["public"]["Tables"]["departments"]["Insert"];
 type License = Database["public"]["Tables"]["licenses"]["Row"];
 type LicenseInsert = Database["public"]["Tables"]["licenses"]["Insert"];
 
-export type { Asset, AssetInsert, Employee, EmployeeInsert, Location, LocationInsert, Company, CompanyInsert, Category, CategoryInsert, Vendor, VendorInsert, AssetTransaction, TransactionInsert, Department, DepartmentInsert, License, LicenseInsert };
+export type {
+  Asset, AssetInsert, Employee, EmployeeInsert, Location, LocationInsert,
+  Company, CompanyInsert, Category, CategoryInsert, Vendor, VendorInsert,
+  AssetTransaction, TransactionInsert, Department, DepartmentInsert, License, LicenseInsert,
+};
 
-// Assets
+// ─── OrgSettings (not in auto-generated types, manually typed) ───────────────
+export interface OrgSettings {
+  id: string;
+  org_name: string;
+  org_address: string | null;
+  org_phone: string | null;
+  org_email: string | null;
+  org_website: string | null;
+  logo_url: string | null;
+  primary_color: string | null;
+  pdf_footer_text: string | null;
+  email_alerts_enabled: boolean;
+  email_alert_recipients: string[];
+  email_alert_days_before: number;
+  email_alert_time: string;
+}
+
+// ─── Generic mutation helper ──────────────────────────────────────────────────
+function invalidate(qc: ReturnType<typeof useQueryClient>, ...keys: string[]) {
+  keys.forEach(k => qc.invalidateQueries({ queryKey: [k] }));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSETS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useAssets() {
   return useQuery({
     queryKey: ["assets"],
@@ -63,7 +93,7 @@ export function useCreateAsset() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["assets"] }),
+    onSuccess: () => invalidate(qc, "assets", "dashboard-stats"),
   });
 }
 
@@ -75,11 +105,25 @@ export function useUpdateAsset() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["assets"] }),
+    onSuccess: () => invalidate(qc, "assets", "dashboard-stats"),
   });
 }
 
-// Employees
+export function useDeleteAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("assets").update({ is_deleted: true }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "assets", "dashboard-stats"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMPLOYEES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useEmployees() {
   return useQuery({
     queryKey: ["employees"],
@@ -103,7 +147,7 @@ export function useCreateEmployee() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["employees"] }),
+    onSuccess: () => invalidate(qc, "employees", "dashboard-stats"),
   });
 }
 
@@ -115,11 +159,25 @@ export function useUpdateEmployee() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["employees"] }),
+    onSuccess: () => invalidate(qc, "employees", "dashboard-stats"),
   });
 }
 
-// Locations
+export function useDeactivateEmployee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("employees").update({ is_active: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "employees", "dashboard-stats"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useLocations() {
   return useQuery({
     queryKey: ["locations"],
@@ -139,11 +197,37 @@ export function useCreateLocation() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["locations"] }),
+    onSuccess: () => invalidate(qc, "locations"),
   });
 }
 
-// Companies
+export function useUpdateLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Location> & { id: string }) => {
+      const { data, error } = await supabase.from("locations").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => invalidate(qc, "locations"),
+  });
+}
+
+export function useDeactivateLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("locations").update({ is_active: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "locations"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPANIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useCompanies() {
   return useQuery({
     queryKey: ["companies"],
@@ -163,11 +247,37 @@ export function useCreateCompany() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["companies"] }),
+    onSuccess: () => invalidate(qc, "companies"),
   });
 }
 
-// Categories
+export function useUpdateCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Company> & { id: string }) => {
+      const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => invalidate(qc, "companies"),
+  });
+}
+
+export function useDeactivateCompany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("companies").update({ is_active: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "companies"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
@@ -187,11 +297,37 @@ export function useCreateCategory() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["categories"] }),
+    onSuccess: () => invalidate(qc, "categories"),
   });
 }
 
-// Vendors
+export function useUpdateCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
+      const { data, error } = await supabase.from("categories").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => invalidate(qc, "categories"),
+  });
+}
+
+export function useDeleteCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "categories"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VENDORS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useVendors() {
   return useQuery({
     queryKey: ["vendors"],
@@ -211,16 +347,46 @@ export function useCreateVendor() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["vendors"] }),
+    onSuccess: () => invalidate(qc, "vendors"),
   });
 }
 
-// Departments
+export function useUpdateVendor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Vendor> & { id: string }) => {
+      const { data, error } = await supabase.from("vendors").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => invalidate(qc, "vendors"),
+  });
+}
+
+export function useDeactivateVendor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("vendors").update({ is_active: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "vendors"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEPARTMENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useDepartments() {
   return useQuery({
     queryKey: ["departments"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("departments").select("*, companies(name), locations(name)").eq("is_active", true).order("name");
+      const { data, error } = await supabase
+        .from("departments")
+        .select("*, companies(name), locations(name)")
+        .eq("is_active", true)
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -235,11 +401,37 @@ export function useCreateDepartment() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["departments"] }),
+    onSuccess: () => invalidate(qc, "departments"),
   });
 }
 
-// Licenses
+export function useUpdateDepartment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Department> & { id: string }) => {
+      const { data, error } = await supabase.from("departments").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => invalidate(qc, "departments"),
+  });
+}
+
+export function useDeactivateDepartment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("departments").update({ is_active: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "departments"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LICENSES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useLicenses() {
   return useQuery({
     queryKey: ["licenses"],
@@ -262,7 +454,7 @@ export function useCreateLicense() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["licenses"] }),
+    onSuccess: () => invalidate(qc, "licenses", "dashboard-stats"),
   });
 }
 
@@ -274,11 +466,25 @@ export function useUpdateLicense() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["licenses"] }),
+    onSuccess: () => invalidate(qc, "licenses", "dashboard-stats"),
   });
 }
 
-// Transactions
+export function useDeleteLicense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("licenses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "licenses", "dashboard-stats"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSET TRANSACTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useAssetTransactions(assetId?: string) {
   return useQuery({
     queryKey: ["transactions", assetId],
@@ -292,7 +498,7 @@ export function useAssetTransactions(assetId?: string) {
       if (error) throw error;
       return data;
     },
-    enabled: assetId ? !!assetId : true,
+    enabled: assetId !== undefined ? !!assetId : true,
   });
 }
 
@@ -304,34 +510,19 @@ export function useCreateTransaction() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["transactions"] });
-      qc.invalidateQueries({ queryKey: ["assets"] });
-    },
+    onSuccess: () => invalidate(qc, "transactions", "assets", "dashboard-stats"),
   });
 }
 
-// Organisation settings (single row)
-export interface OrgSettings {
-  id: string;
-  org_name: string;
-  org_address: string | null;
-  org_phone: string | null;
-  org_email: string | null;
-  org_website: string | null;
-  logo_url: string | null;
-  primary_color: string | null;
-  pdf_footer_text: string | null;
-  email_alerts_enabled: boolean;
-  email_alert_recipients: string[];
-  email_alert_days_before: number;
-  email_alert_time: string;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// ORGANISATION SETTINGS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export function useOrgSettings() {
   return useQuery({
     queryKey: ["org_settings"],
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("organization_settings")
         .select("*")
@@ -348,6 +539,7 @@ export function useUpdateOrgSettings() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<OrgSettings> & { id: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("organization_settings")
         .update(updates)
@@ -355,13 +547,16 @@ export function useUpdateOrgSettings() {
         .select()
         .single();
       if (error) throw error;
-      return data;
+      return data as OrgSettings;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["org_settings"] }),
   });
 }
 
-// Dashboard stats
+// ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD STATS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export function useDashboardStats() {
   return useQuery({
     queryKey: ["dashboard-stats"],
@@ -376,33 +571,30 @@ export function useDashboardStats() {
       if (employeesRes.error) throw employeesRes.error;
       if (locationsRes.error) throw locationsRes.error;
 
-      const assets = assetsRes.data || [];
-      const licenses = licensesRes.data || [];
+      const assets = assetsRes.data ?? [];
+      const licenses = licensesRes.data ?? [];
       const totalValue = assets.reduce((s, a) => s + (Number(a.purchase_cost) || 0), 0);
-      const allocated = assets.filter(a => a.status === 'allocated').length;
-      const available = assets.filter(a => a.status === 'available').length;
+      const allocated = assets.filter(a => a.status === "allocated").length;
+      const available = assets.filter(a => a.status === "available").length;
 
       const deptStats: Record<string, number> = {};
-      (employeesRes.data || []).forEach(e => { deptStats[e.department] = (deptStats[e.department] || 0) + 1; });
+      (employeesRes.data ?? []).forEach(e => { deptStats[e.department] = (deptStats[e.department] || 0) + 1; });
 
-      // Asset subtype stats
       const subtypeStats: Record<string, number> = {};
       assets.forEach(a => {
-        const st = a.asset_subtype || 'other';
+        const st = a.asset_subtype ?? "other";
         subtypeStats[st] = (subtypeStats[st] || 0) + 1;
       });
 
-      // Location stats
       const locationStats: Record<string, number> = {};
-      const locationMap = new Map((locationsRes.data || []).map(l => [l.id, l.name]));
+      const locationMap = new Map((locationsRes.data ?? []).map(l => [l.id, l.name]));
       assets.forEach(a => {
-        const locName = a.current_location_id ? locationMap.get(a.current_location_id) || 'Unknown' : 'Unassigned';
+        const locName = a.current_location_id ? (locationMap.get(a.current_location_id) ?? "Unknown") : "Unassigned";
         locationStats[locName] = (locationStats[locName] || 0) + 1;
       });
 
-      // Expiring licenses/warranties
-      const now = new Date().toISOString().split('T')[0];
-      const thirtyDays = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+      const now = new Date().toISOString().split("T")[0];
+      const thirtyDays = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
       const expiringWarranties = assets.filter(a => a.warranty_end && a.warranty_end >= now && a.warranty_end <= thirtyDays);
       const expiringLicenses = licenses.filter(l => l.validity_end && l.validity_end >= now && l.validity_end <= thirtyDays);
 
@@ -411,11 +603,13 @@ export function useDashboardStats() {
         allocated,
         available,
         totalValue,
-        employeeCount: (employeesRes.data || []).length,
-        locationCount: (locationsRes.data || []).length,
+        employeeCount: (employeesRes.data ?? []).length,
+        locationCount: (locationsRes.data ?? []).length,
         licenseCount: licenses.length,
         departmentStats: Object.entries(deptStats).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
-        subtypeStats: Object.entries(subtypeStats).map(([name, value]) => ({ name: name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), value })).sort((a, b) => b.value - a.value),
+        subtypeStats: Object.entries(subtypeStats).map(([name, value]) => ({
+          name: name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()), value,
+        })).sort((a, b) => b.value - a.value),
         locationStats: Object.entries(locationStats).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
         expiringWarranties,
         expiringLicenses,
