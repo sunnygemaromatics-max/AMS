@@ -28,6 +28,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Restore path redirected by 404.html for SPA routing on GitHub Pages -->
+    <script>
+      (function () {
+        var r = new URLSearchParams(window.location.search).get('r');
+        if (r) {
+          window.history.replaceState(null, '', decodeURIComponent(r));
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
