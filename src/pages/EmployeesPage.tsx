@@ -279,7 +279,7 @@ export default function EmployeesPage() {
                   </div>
                   <div className="space-y-1">
                     <Label>Reporting Manager</Label>
-                    <Select value={form.reporting_manager} onValueChange={(v) => set("reporting_manager", v)}>
+                    <Select value={form.reporting_manager || "_none"} onValueChange={(v) => set("reporting_manager", v === "_none" ? "" : v)}>
                       <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">— None —</SelectItem>
@@ -301,7 +301,7 @@ export default function EmployeesPage() {
                   </div>
                   <div className="space-y-1">
                     <Label>Department Group</Label>
-                    <Select value={form.department_id} onValueChange={(v) => set("department_id", v)}>
+                    <Select value={form.department_id || "_none"} onValueChange={(v) => set("department_id", v === "_none" ? "" : v)}>
                       <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="_none">— None —</SelectItem>
@@ -351,7 +351,7 @@ export default function EmployeesPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm mt-3">
                     <div className="space-y-1">
                       <Label>Location / Branch</Label>
-                      <Select value={form.location_id} onValueChange={(v) => set("location_id", v)}>
+                      <Select value={form.location_id || "_none"} onValueChange={(v) => set("location_id", v === "_none" ? "" : v)}>
                         <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="_none">— None —</SelectItem>
@@ -363,7 +363,7 @@ export default function EmployeesPage() {
                     </div>
                     <div className="space-y-1">
                       <Label>Company</Label>
-                      <Select value={form.company_id} onValueChange={(v) => set("company_id", v)}>
+                      <Select value={form.company_id || "_none"} onValueChange={(v) => set("company_id", v === "_none" ? "" : v)}>
                         <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="_none">— None —</SelectItem>

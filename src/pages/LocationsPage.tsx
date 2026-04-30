@@ -155,10 +155,10 @@ export default function LocationsPage() {
             <div className="space-y-1"><Label>Address</Label><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
             <div className="space-y-1">
               <Label>Company</Label>
-              <Select value={form.company_id} onValueChange={v => setForm(f => ({ ...f, company_id: v }))}>
+              <Select value={form.company_id || "__none__"} onValueChange={v => setForm(f => ({ ...f, company_id: v === "__none__" ? "" : v }))}>
                 <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— None —</SelectItem>
+                  <SelectItem value="__none__">— None —</SelectItem>
                   {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>

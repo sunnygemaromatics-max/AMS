@@ -214,19 +214,19 @@ function DepartmentsTab() {
         <Field label="Name *"><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Engineering" /></Field>
         <Field label="Code *"><Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="ENG" maxLength={10} /></Field>
         <Field label="Company">
-          <Select value={form.company_id} onValueChange={v => setForm(f => ({ ...f, company_id: v }))}>
+          <Select value={form.company_id || "__none__"} onValueChange={v => setForm(f => ({ ...f, company_id: v === "__none__" ? "" : v }))}>
             <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">— None —</SelectItem>
+              <SelectItem value="__none__">— None —</SelectItem>
               {(companies ?? []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </Field>
         <Field label="Location">
-          <Select value={form.location_id} onValueChange={v => setForm(f => ({ ...f, location_id: v }))}>
+          <Select value={form.location_id || "__none__"} onValueChange={v => setForm(f => ({ ...f, location_id: v === "__none__" ? "" : v }))}>
             <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">— None —</SelectItem>
+              <SelectItem value="__none__">— None —</SelectItem>
               {(locations ?? []).map((l: any) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
             </SelectContent>
           </Select>
