@@ -11,6 +11,8 @@ interface Profile {
   avatar_url: string | null;
   employee_id: string | null;
   approval_status: ApprovalStatus;
+  username: string | null;
+  email: string | null;
 }
 
 interface AuthCtx {

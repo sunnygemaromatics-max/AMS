@@ -554,6 +554,85 @@ export function useUpdateOrgSettings() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// AUDIT LOG
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface AuditEntry {
+  id: string;
+  entity_type: string;
+  entity_id: string | null;
+  entity_code: string | null;
+  entity_name: string | null;
+  action: string;
+  actor_id: string | null;
+  actor_name: string | null;
+  actor_username: string | null;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  company_name: string | null;
+  department_name: string | null;
+  location_name: string | null;
+  employee_name: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface AuditFilters {
+  entityType?: string;
+  action?: string;
+  companyName?: string;
+  departmentName?: string;
+  locationName?: string;
+  employeeName?: string;
+  actorUsername?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export function useAuditLog(filters: AuditFilters = {}) {
+  return useQuery({
+    queryKey: ["audit_log", filters],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase as any)
+        .from("audit_log")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (filters.entityType && filters.entityType !== "all")
+        q = q.eq("entity_type", filters.entityType);
+      if (filters.action && filters.action !== "all")
+        q = q.eq("action", filters.action);
+      if (filters.companyName && filters.companyName !== "all")
+        q = q.eq("company_name", filters.companyName);
+      if (filters.departmentName && filters.departmentName !== "all")
+        q = q.eq("department_name", filters.departmentName);
+      if (filters.locationName && filters.locationName !== "all")
+        q = q.eq("location_name", filters.locationName);
+      if (filters.employeeName && filters.employeeName !== "all")
+        q = q.ilike("employee_name", `%${filters.employeeName}%`);
+      if (filters.actorUsername && filters.actorUsername !== "all")
+        q = q.ilike("actor_username", `%${filters.actorUsername}%`);
+      if (filters.from)
+        q = q.gte("created_at", filters.from);
+      if (filters.to)
+        q = q.lte("created_at", filters.to + "T23:59:59Z");
+      if (filters.search)
+        q = q.or(
+          `entity_code.ilike.%${filters.search}%,entity_name.ilike.%${filters.search}%,actor_username.ilike.%${filters.search}%,employee_name.ilike.%${filters.search}%,location_name.ilike.%${filters.search}%`
+        );
+
+      const { data, error } = await q.limit(filters.limit ?? 500);
+      if (error) throw error;
+      return (data ?? []) as AuditEntry[];
+    },
+    staleTime: 10_000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // DASHBOARD STATS
 // ═══════════════════════════════════════════════════════════════════════════════
 

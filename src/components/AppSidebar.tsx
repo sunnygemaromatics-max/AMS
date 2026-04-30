@@ -12,6 +12,7 @@ import {
   Shield,
   Briefcase,
   Activity,
+  BarChart3,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -40,6 +41,7 @@ const mainNav = [
 ];
 
 const dataNav = [
+  { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Bulk Import", url: "/import", icon: Upload },
   { title: "Import History", url: "/import/history", icon: History },
   { title: "Activity Timeline", url: "/activity", icon: Activity },

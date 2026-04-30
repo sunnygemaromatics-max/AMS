@@ -29,6 +29,7 @@ const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const BulkImportPage = lazy(() => import("./pages/BulkImportPage"));
 const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
+const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +72,7 @@ const App = () => (
                           <Route path="/import" element={<BulkImportPage />} />
                           <Route path="/import/history" element={<ImportHistoryPage />} />
                           <Route path="/activity" element={<ActivityPage />} />
+                          <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
                           <Route path="/companies" element={<SettingsPage />} />
                           <Route path="/settings" element={<SettingsPage />} />

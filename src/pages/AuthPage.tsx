@@ -7,34 +7,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, ArrowLeft, Mail, Lock, User, CheckCircle2 } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, Mail, Lock, User, CheckCircle2, AtSign } from "lucide-react";
 
-const emailSchema = z.string().trim().email("Enter a valid email").max(255);
-const pwSchema   = z.string().min(8, "Password must be at least 8 characters").max(72);
-const nameSchema = z.string().trim().min(2, "Name must be at least 2 characters").max(100);
+const emailSchema    = z.string().trim().email("Enter a valid email").max(255);
+const pwSchema       = z.string().min(8, "Password must be at least 8 characters").max(72);
+const nameSchema     = z.string().trim().min(2, "Name must be at least 2 characters").max(100);
+const usernameSchema = z.string()
+  .trim()
+  .min(3, "Username must be at least 3 characters")
+  .max(20, "Username must be 20 characters or less")
+  .regex(/^[a-z0-9_]+$/, "Only lowercase letters, numbers, and underscores");
 
 type View = "login" | "signup" | "forgot" | "forgot_sent";
+
+function suggestUsername(name: string): string {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "").slice(0, 20);
+}
 
 export default function AuthPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
 
-  const [view, setView]         = useState<View>("login");
-  const [busy, setBusy]         = useState(false);
-  const [showPw, setShowPw]     = useState(false);
-  const [showPw2, setShowPw2]   = useState(false);
+  const [view, setView]       = useState<View>("login");
+  const [busy, setBusy]       = useState(false);
+  const [showPw, setShowPw]   = useState(false);
+  const [showPw2, setShowPw2] = useState(false);
 
-  // Login fields
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPw, setLoginPw]       = useState("");
+  // Login — accepts email OR username
+  const [loginId, setLoginId]   = useState("");
+  const [loginPw, setLoginPw]   = useState("");
 
-  // Signup fields
-  const [signupName,  setSignupName]  = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPw,    setSignupPw]    = useState("");
-  const [signupPw2,   setSignupPw2]   = useState("");
+  // Signup
+  const [signupName,     setSignupName]     = useState("");
+  const [signupUsername, setSignupUsername] = useState("");
+  const [signupEmail,    setSignupEmail]    = useState("");
+  const [signupPw,       setSignupPw]       = useState("");
+  const [signupPw2,      setSignupPw2]      = useState("");
 
-  // Forgot fields
+  // Forgot
   const [forgotEmail, setForgotEmail] = useState("");
 
   if (loading) return (
@@ -44,17 +54,30 @@ export default function AuthPage() {
   );
   if (user) return <Navigate to="/" replace />;
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
   const onLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { emailSchema.parse(loginEmail); pwSchema.parse(loginPw); }
-    catch (err: any) { toast.error(err.errors?.[0]?.message || "Invalid input"); return; }
+    if (!loginId.trim() || !loginPw) { toast.error("Enter your credentials"); return; }
     setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPw });
+
+    let email = loginId.trim();
+
+    // Username login: no "@" → look up email via DB function
+    if (!email.includes("@")) {
+      const { data: found, error: rpcErr } = await supabase.rpc("get_email_by_username", { p_username: email });
+      if (rpcErr || !found) {
+        toast.error("No account found with that username");
+        setBusy(false);
+        return;
+      }
+      email = found as string;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password: loginPw });
     setBusy(false);
     if (error) {
-      if (error.message.includes("Invalid login credentials")) toast.error("Incorrect email or password");
+      if (error.message.includes("Invalid login credentials")) toast.error("Incorrect credentials");
       else toast.error(error.message);
     } else {
       toast.success("Welcome back!");
@@ -64,16 +87,30 @@ export default function AuthPage() {
 
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { nameSchema.parse(signupName); emailSchema.parse(signupEmail); pwSchema.parse(signupPw); }
-    catch (err: any) { toast.error(err.errors?.[0]?.message || "Invalid input"); return; }
+    try {
+      nameSchema.parse(signupName);
+      usernameSchema.parse(signupUsername);
+      emailSchema.parse(signupEmail);
+      pwSchema.parse(signupPw);
+    } catch (err: any) { toast.error(err.errors?.[0]?.message || "Invalid input"); return; }
     if (signupPw !== signupPw2) { toast.error("Passwords do not match"); return; }
+
     setBusy(true);
+
+    // Check username availability
+    const { data: avail } = await supabase.rpc("username_available", { p_username: signupUsername });
+    if (!avail) {
+      toast.error("Username is already taken — choose another");
+      setBusy(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email: signupEmail,
       password: signupPw,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: signupName },
+        data: { full_name: signupName, username: signupUsername.toLowerCase() },
       },
     });
     setBusy(false);
@@ -94,12 +131,11 @@ export default function AuthPage() {
     else setView("forgot_sent");
   };
 
-  // ── Shared layout wrappers ────────────────────────────────────────────────
-
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
 
-      {/* Left panel — branding */}
+      {/* Left branding panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 via-transparent to-blue-600/10" />
         <div className="relative">
@@ -121,30 +157,20 @@ export default function AuthPage() {
             Track, allocate, and audit every asset across your organisation — from laptops to licenses — in one secure platform.
           </p>
         </div>
-
-        {/* Feature pills */}
         <div className="relative space-y-3">
-          {[
-            { label: "Real-time asset tracking" },
-            { label: "Role-based access control" },
-            { label: "Bulk import & audit logs" },
-            { label: "Warranty & license alerts" },
-          ].map((f) => (
-            <div key={f.label} className="flex items-center gap-3">
+          {["Real-time asset tracking", "Role-based access control", "Complete audit trail", "Warranty & license alerts"].map(f => (
+            <div key={f} className="flex items-center gap-3">
               <div className="h-5 w-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
                 <CheckCircle2 className="h-3 w-3 text-emerald-400" />
               </div>
-              <span className="text-slate-300 text-sm">{f.label}</span>
+              <span className="text-slate-300 text-sm">{f}</span>
             </div>
           ))}
-          <p className="text-slate-600 text-xs pt-6">
-            © Personify Crafters – All Rights Reserved<br />
-            Designed &amp; Developed by Personify Crafters
-          </p>
+          <p className="text-slate-600 text-xs pt-6">© Personify Crafters – All Rights Reserved</p>
         </div>
       </div>
 
-      {/* Right panel — auth form */}
+      {/* Right auth panel */}
       <div className="flex-1 flex flex-col justify-center items-center p-6 lg:p-12">
         <div className="w-full max-w-md">
 
@@ -164,17 +190,17 @@ export default function AuthPage() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-white">Sign in</h2>
-                <p className="text-slate-400 text-sm mt-1">Enter your credentials to access the system.</p>
+                <p className="text-slate-400 text-sm mt-1">Use your email address or @username.</p>
               </div>
               <form onSubmit={onLogin} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">Email address</Label>
+                  <Label className="text-slate-300 text-sm">Email or Username</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
-                      type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
+                      value={loginId} onChange={e => setLoginId(e.target.value)}
                       className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500"
-                      placeholder="you@example.com" required maxLength={255}
+                      placeholder="you@example.com or your_username" required maxLength={255}
                     />
                   </div>
                 </div>
@@ -221,17 +247,38 @@ export default function AuthPage() {
                 <p className="text-slate-400 text-sm mt-1">New accounts require admin approval before access.</p>
               </div>
               <form onSubmit={onSignup} className="space-y-4">
+                {/* Full name */}
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-sm">Full name</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <Input
-                      value={signupName} onChange={e => setSignupName(e.target.value)}
+                      value={signupName}
+                      onChange={e => {
+                        setSignupName(e.target.value);
+                        if (!signupUsername) setSignupUsername(suggestUsername(e.target.value));
+                      }}
                       className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500"
                       placeholder="Rahul Sharma" required maxLength={100}
                     />
                   </div>
                 </div>
+                {/* Username */}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 text-sm">
+                    Username <span className="text-slate-500 text-xs">(used to sign in, lowercase, no spaces)</span>
+                  </Label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      value={signupUsername}
+                      onChange={e => setSignupUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                      className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-emerald-500"
+                      placeholder="rahul_sharma" required minLength={3} maxLength={20}
+                    />
+                  </div>
+                </div>
+                {/* Email */}
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-sm">Email address</Label>
                   <div className="relative">
@@ -243,6 +290,7 @@ export default function AuthPage() {
                     />
                   </div>
                 </div>
+                {/* Password */}
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-sm">Password</Label>
                   <div className="relative">
@@ -258,6 +306,7 @@ export default function AuthPage() {
                     </button>
                   </div>
                 </div>
+                {/* Confirm password */}
                 <div className="space-y-1.5">
                   <Label className="text-slate-300 text-sm">Confirm password</Label>
                   <div className="relative">
@@ -297,9 +346,7 @@ export default function AuthPage() {
               </button>
               <div>
                 <h2 className="text-2xl font-bold text-white">Reset password</h2>
-                <p className="text-slate-400 text-sm mt-1">
-                  Enter your account email and we'll send you a reset link.
-                </p>
+                <p className="text-slate-400 text-sm mt-1">Enter your account email and we'll send you a reset link.</p>
               </div>
               <form onSubmit={onForgot} className="space-y-4">
                 <div className="space-y-1.5">
@@ -331,8 +378,7 @@ export default function AuthPage() {
               <div>
                 <h2 className="text-2xl font-bold text-white">Check your inbox</h2>
                 <p className="text-slate-400 text-sm mt-2">
-                  We've sent a password reset link to <span className="text-white font-medium">{forgotEmail}</span>.
-                  The link expires in 1 hour.
+                  We've sent a reset link to <span className="text-white font-medium">{forgotEmail}</span>. The link expires in 1 hour.
                 </p>
               </div>
               <Button type="button" variant="outline"
@@ -343,7 +389,6 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* Footer */}
           <p className="text-center text-xs text-slate-700 mt-10 lg:hidden">
             © Personify Crafters – All Rights Reserved
           </p>
