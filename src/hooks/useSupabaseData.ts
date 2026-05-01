@@ -89,9 +89,8 @@ export function useCreateAsset() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (asset: AssetInsert) => {
-      const { data, error } = await supabase.from("assets").insert(asset).select().single();
+      const { error } = await supabase.from("assets").insert(asset);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "assets", "dashboard-stats"),
   });
@@ -101,9 +100,8 @@ export function useUpdateAsset() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Asset> & { id: string }) => {
-      const { data, error } = await supabase.from("assets").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("assets").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "assets", "dashboard-stats"),
   });
@@ -143,9 +141,8 @@ export function useCreateEmployee() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (emp: EmployeeInsert) => {
-      const { data, error } = await supabase.from("employees").insert(emp).select().single();
+      const { error } = await supabase.from("employees").insert(emp);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "employees", "dashboard-stats"),
   });
@@ -155,9 +152,8 @@ export function useUpdateEmployee() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Employee> & { id: string }) => {
-      const { data, error } = await supabase.from("employees").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("employees").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "employees", "dashboard-stats"),
   });
@@ -193,9 +189,8 @@ export function useCreateLocation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (loc: LocationInsert) => {
-      const { data, error } = await supabase.from("locations").insert(loc).select().single();
+      const { error } = await supabase.from("locations").insert(loc);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "locations"),
   });
@@ -205,9 +200,8 @@ export function useUpdateLocation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Location> & { id: string }) => {
-      const { data, error } = await supabase.from("locations").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("locations").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "locations"),
   });
@@ -243,9 +237,8 @@ export function useCreateCompany() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (company: CompanyInsert) => {
-      const { data, error } = await supabase.from("companies").insert(company).select().single();
+      const { error } = await supabase.from("companies").insert(company);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "companies"),
   });
@@ -255,9 +248,8 @@ export function useUpdateCompany() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Company> & { id: string }) => {
-      const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("companies").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "companies"),
   });
@@ -293,9 +285,8 @@ export function useCreateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (cat: CategoryInsert) => {
-      const { data, error } = await supabase.from("categories").insert(cat).select().single();
+      const { error } = await supabase.from("categories").insert(cat);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "categories"),
   });
@@ -305,9 +296,8 @@ export function useUpdateCategory() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
-      const { data, error } = await supabase.from("categories").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("categories").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "categories"),
   });
@@ -343,9 +333,8 @@ export function useCreateVendor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (vendor: VendorInsert) => {
-      const { data, error } = await supabase.from("vendors").insert(vendor).select().single();
+      const { error } = await supabase.from("vendors").insert(vendor);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "vendors"),
   });
@@ -355,9 +344,8 @@ export function useUpdateVendor() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Vendor> & { id: string }) => {
-      const { data, error } = await supabase.from("vendors").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("vendors").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "vendors"),
   });
@@ -397,9 +385,8 @@ export function useCreateDepartment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (dept: DepartmentInsert) => {
-      const { data, error } = await supabase.from("departments").insert(dept).select().single();
+      const { error } = await supabase.from("departments").insert(dept);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "departments"),
   });
@@ -409,9 +396,8 @@ export function useUpdateDepartment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Department> & { id: string }) => {
-      const { data, error } = await supabase.from("departments").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("departments").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "departments"),
   });
@@ -450,9 +436,8 @@ export function useCreateLicense() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (license: LicenseInsert) => {
-      const { data, error } = await supabase.from("licenses").insert(license).select().single();
+      const { error } = await supabase.from("licenses").insert(license);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "licenses", "dashboard-stats"),
   });
@@ -462,9 +447,8 @@ export function useUpdateLicense() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<License> & { id: string }) => {
-      const { data, error } = await supabase.from("licenses").update(updates).eq("id", id).select().single();
+      const { error } = await supabase.from("licenses").update(updates).eq("id", id);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "licenses", "dashboard-stats"),
   });
@@ -506,9 +490,8 @@ export function useCreateTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (tx: TransactionInsert) => {
-      const { data, error } = await supabase.from("asset_transactions").insert(tx).select().single();
+      const { error } = await supabase.from("asset_transactions").insert(tx);
       if (error) throw error;
-      return data;
     },
     onSuccess: () => invalidate(qc, "transactions", "assets", "dashboard-stats"),
   });
