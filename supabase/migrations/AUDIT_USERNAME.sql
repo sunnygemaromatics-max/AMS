@@ -115,7 +115,7 @@ ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Approved users view audit_log"  ON public.audit_log;
 CREATE POLICY "Approved users view audit_log" ON public.audit_log
-  FOR SELECT USING (is_approved());
+  FOR SELECT USING (public.is_approved(auth.uid()));
 
 -- Triggers insert as SECURITY DEFINER, so no INSERT policy needed for them.
 -- Allow authenticated users to insert (fallback for app-level logging).

@@ -60,7 +60,7 @@ export function useAssets() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select("*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code)")
+        .select("*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code), companies(name)")
         .eq("is_deleted", false)
         .order("bin_card_no");
       if (error) throw error;
@@ -75,7 +75,7 @@ export function useAsset(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select("*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code)")
+        .select("*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code), companies(name)")
         .eq("id", id)
         .single();
       if (error) throw error;

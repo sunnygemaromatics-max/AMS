@@ -115,7 +115,10 @@ export default function AuthPage() {
     });
     setBusy(false);
     if (error) toast.error(error.message);
-    else toast.success("Account created — an admin will approve your access shortly.");
+    else {
+      toast.success("Account created — an admin will approve your access shortly.");
+      setView("login");
+    }
   };
 
   const onForgot = async (e: React.FormEvent) => {

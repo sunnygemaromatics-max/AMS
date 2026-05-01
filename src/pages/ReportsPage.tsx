@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, FileText, Users, Package, Key, AlertTriangle } from "lucide-react";
-import { format, addDays, parseISO } from "date-fns";
+import { format, addDays } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -278,9 +278,9 @@ function EmployeeAssetsReport({ companies, departments, locations, employees }: 
 
   const toPdfRows = () => employeeRows.flatMap((e: any) =>
     e.assets.length === 0
-      ? [[e.employee_code, e.name, e.department, e.locations?.name||"—", e.companies?.name||"—", "No assets", "—", "—", "—"]]
+      ? [[e.employee_code, e.name, e.departments?.name || e.department || "—", e.locations?.name||"—", e.companies?.name||"—", "No assets", "—", "—", "—"]]
       : e.assets.map((a: any) => [
-          e.employee_code, e.name, e.department, e.locations?.name||"—", e.companies?.name||"—",
+          e.employee_code, e.name, e.departments?.name || e.department || "—", e.locations?.name||"—", e.companies?.name||"—",
           a.sap_code, a.name, a.status?.replace(/_/g," ")||"—",
           a.purchase_cost ? `₹${Number(a.purchase_cost).toLocaleString()}` : "—",
         ])
@@ -319,7 +319,7 @@ function EmployeeAssetsReport({ companies, departments, locations, employees }: 
                     </div>
                     <div>
                       <p className="font-semibold text-sm">{e.name}</p>
-                      <p className="text-xs text-muted-foreground">{e.department} · {e.employee_code}</p>
+                      <p className="text-xs text-muted-foreground">{e.departments?.name || e.department || "—"} · {e.employee_code}</p>
                     </div>
                   </div>
                 </div>
@@ -463,10 +463,10 @@ function SummaryReport({ companies, departments, locations }: any) {
 function ExpiryReport() {
   const { data: assets = [] }   = useAssets();
   const { data: licenses = [] } = useLicenses();
-  const [window, setWindow] = useState("30");
+  const [expiryDays, setExpiryDays] = useState("30");
 
   const today = new Date();
-  const cutoff = addDays(today, parseInt(window)).toISOString().split("T")[0];
+  const cutoff = addDays(today, parseInt(expiryDays)).toISOString().split("T")[0];
   const todayStr = today.toISOString().split("T")[0];
 
   const warranties = useMemo(() =>
@@ -495,7 +495,7 @@ function ExpiryReport() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <label className="text-sm font-medium">Expiring within:</label>
-        <Select value={window} onValueChange={setWindow}>
+        <Select value={expiryDays} onValueChange={setExpiryDays}>
           <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="7">7 days</SelectItem>
@@ -507,8 +507,8 @@ function ExpiryReport() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Warranties Expiring" value={warranties.length} sub={`within ${window} days`} />
-        <StatCard label="Licenses Expiring" value={licenseExpiries.length} sub={`within ${window} days`} />
+        <StatCard label="Warranties Expiring" value={warranties.length} sub={`within ${expiryDays} days`} />
+        <StatCard label="Licenses Expiring" value={licenseExpiries.length} sub={`within ${expiryDays} days`} />
       </div>
 
       {/* Warranties */}
