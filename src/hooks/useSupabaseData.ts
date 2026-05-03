@@ -482,7 +482,7 @@ export function useAssetTransactions(assetId?: string) {
       if (error) throw error;
       return data;
     },
-    enabled: assetId !== undefined ? !!assetId : true,
+    enabled: !!assetId,
   });
 }
 

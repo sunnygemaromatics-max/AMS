@@ -13,6 +13,8 @@ export default function BinCardsPage() {
   const { data: assets, isLoading } = useAssets();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  // Must be above any early return — React rules of hooks
+  const { data: selectedTx } = useAssetTransactions(selected ?? undefined);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
@@ -22,7 +24,6 @@ export default function BinCardsPage() {
   });
 
   const selectedAsset = selected ? (assets || []).find((a: any) => a.id === selected) : null;
-  const { data: selectedTx } = useAssetTransactions(selected || undefined);
 
   return (
     <div className="space-y-6">
