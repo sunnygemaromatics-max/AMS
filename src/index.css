@@ -4,98 +4,98 @@
 
 @layer base {
   :root {
-    /* TSI Brand Colors - Professional Blue Theme */
-    --background: 215 25% 97%;
-    --foreground: 215 25% 15%;
+    /* TSI Brand Colors - Exact Logo Colors */
+    --background: 220 35% 97%;
+    --foreground: 220 25% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 220 25% 12%;
 
-    --primary: 215 85% 55%;
-    --primary-foreground: 215 25% 98%;
+    --primary: 250 65% 55%;
+    --primary-foreground: 220 25% 98%;
 
-    --secondary: 215 15% 96%;
-    --secondary-foreground: 215 25% 15%;
+    --secondary: 220 25% 95%;
+    --secondary-foreground: 220 25% 12%;
 
-    --muted: 215 10% 94%;
-    --muted-foreground: 215 8% 50%;
+    --muted: 220 15% 93%;
+    --muted-foreground: 220 10% 48%;
 
-    --accent: 215 75% 60%;
-    --accent-foreground: 215 25% 98%;
+    --accent: 190 75% 65%;
+    --accent-foreground: 220 25% 98%;
 
-    --destructive: 0 70% 55%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 15% 88%;
-    --input: 215 15% 88%;
-    --ring: 215 85% 55%;
+    --border: 220 20% 86%;
+    --input: 220 20% 86%;
+    --ring: 250 65% 55%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 215 25% 10%;
-    --sidebar-foreground: 215 20% 85%;
-    --sidebar-primary: 215 85% 55%;
-    --sidebar-primary-foreground: 215 25% 98%;
-    --sidebar-accent: 215 15% 15%;
-    --sidebar-accent-foreground: 215 20% 90%;
-    --sidebar-border: 215 15% 20%;
-    --sidebar-ring: 215 85% 55%;
+    --sidebar-background: 250 65% 12%;
+    --sidebar-foreground: 220 20% 85%;
+    --sidebar-primary: 250 65% 55%;
+    --sidebar-primary-foreground: 220 25% 98%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 220 20% 90%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 250 65% 55%;
 
-    /* TSI Custom tokens */
+    /* TSI Custom tokens from logo */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 32 95% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 215 85% 55%;
+    --info: 190 75% 65%;
     --info-foreground: 0 0% 100%;
 
-    --kpi-1: 215 85% 55%;
-    --kpi-2: 142 76% 36%;
-    --kpi-3: 32 95% 50%;
-    --kpi-4: 0 70% 55%;
+    --kpi-1: 250 65% 55%;
+    --kpi-2: 190 75% 65%;
+    --kpi-3: 142 76% 36%;
+    --kpi-4: 32 95% 50%;
   }
 
   .dark {
-    /* TSI Dark Theme Colors */
-    --background: 215 25% 8%;
-    --foreground: 215 20% 90%;
+    /* TSI Dark Theme Colors - Logo Based */
+    --background: 250 65% 8%;
+    --foreground: 220 20% 90%;
 
-    --card: 215 25% 12%;
-    --card-foreground: 215 20% 90%;
+    --card: 250 65% 12%;
+    --card-foreground: 220 20% 90%;
 
-    --popover: 215 25% 12%;
-    --popover-foreground: 215 20% 90%;
+    --popover: 250 65% 12%;
+    --popover-foreground: 220 20% 90%;
 
-    --primary: 215 75% 60%;
-    --primary-foreground: 215 25% 8%;
+    --primary: 250 65% 65%;
+    --primary-foreground: 250 65% 8%;
 
-    --secondary: 215 15% 18%;
-    --secondary-foreground: 215 20% 90%;
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 220 20% 90%;
 
-    --muted: 215 10% 20%;
-    --muted-foreground: 215 8% 60%;
+    --muted: 220 10% 20%;
+    --muted-foreground: 220 8% 60%;
 
-    --accent: 215 65% 65%;
-    --accent-foreground: 215 25% 8%;
+    --accent: 190 75% 70%;
+    --accent-foreground: 250 65% 8%;
 
     --destructive: 0 60% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 15% 22%;
-    --input: 215 15% 22%;
-    --ring: 215 75% 60%;
+    --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 250 65% 65%;
 
-    --sidebar-background: 215 25% 6%;
-    --sidebar-foreground: 215 20% 80%;
-    --sidebar-primary: 215 75% 60%;
-    --sidebar-primary-foreground: 215 25% 8%;
-    --sidebar-accent: 215 15% 12%;
-    --sidebar-accent-foreground: 215 20% 90%;
-    --sidebar-border: 215 15% 18%;
-    --sidebar-ring: 215 75% 60%;
+    --sidebar-background: 250 65% 6%;
+    --sidebar-foreground: 220 20% 80%;
+    --sidebar-primary: 250 65% 65%;
+    --sidebar-primary-foreground: 250 65% 8%;
+    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent-foreground: 220 20% 90%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 250 65% 65%;
   }
 }
 
@@ -111,15 +111,15 @@
 
 @layer utilities {
   .kpi-gradient-1 {
-    background: linear-gradient(135deg, hsl(var(--kpi-1)), hsl(215 70% 45%));
+    background: linear-gradient(135deg, hsl(var(--kpi-1)), hsl(250 55% 45%));
   }
   .kpi-gradient-2 {
-    background: linear-gradient(135deg, hsl(var(--kpi-2)), hsl(142 65% 45%));
+    background: linear-gradient(135deg, hsl(var(--kpi-2)), hsl(190 65% 55%));
   }
   .kpi-gradient-3 {
-    background: linear-gradient(135deg, hsl(var(--kpi-3)), hsl(32 85% 55%));
+    background: linear-gradient(135deg, hsl(var(--kpi-3)), hsl(142 65% 45%));
   }
   .kpi-gradient-4 {
-    background: linear-gradient(135deg, hsl(var(--kpi-4)), hsl(0 60% 50%));
+    background: linear-gradient(135deg, hsl(var(--kpi-4)), hsl(32 85% 55%));
   }
 }
