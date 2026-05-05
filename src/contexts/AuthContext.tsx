@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { authRateLimiter } from "@/lib/rateLimiter";
+import { toast } from "@/hooks/use-toast";
 
 export type AppRole = "admin" | "it" | "hr" | "viewer";
 export type ApprovalStatus = "pending" | "approved" | "rejected";
@@ -11,8 +13,12 @@ interface Profile {
   avatar_url: string | null;
   employee_id: string | null;
   approval_status: ApprovalStatus;
-  username: string | null;
-  email: string | null;
+  username?: string | null;
+  email?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 interface AuthCtx {
@@ -84,6 +90,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider value={{
       user, session, profile, roles, loading, isAdmin, canWrite, canEditEmployees,
       signOut: async () => {
+        const rateLimitKey = user?.email || 'anonymous';
+        const { allowed } = authRateLimiter.isAllowed(`signout-${rateLimitKey}`);
+        
+        if (!allowed) {
+          toast({
+            title: "Rate limit exceeded",
+            description: "Please wait before trying again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         setProfile(null);
         setRoles([]);
         await supabase.auth.signOut();

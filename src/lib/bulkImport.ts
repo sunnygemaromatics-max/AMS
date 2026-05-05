@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from 'exceljs';
 import JSZip from "jszip";
 
 export type ParsedRow = Record<string, any>;
@@ -8,20 +8,67 @@ export interface ParsedFile {
 }
 
 export async function parseExcelFile(file: File | Blob, filename: string): Promise<ParsedFile> {
+  const workbook = new ExcelJS.Workbook();
   const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array", cellDates: true });
-  const sheets = wb.SheetNames.map((name) => ({
-    name,
-    rows: XLSX.utils.sheet_to_json<ParsedRow>(wb.Sheets[name], { defval: null, raw: false }),
-  }));
+  await workbook.xlsx.load(buf);
+  
+  const sheets = workbook.worksheets.map((worksheet) => {
+    const rows: ParsedRow[] = [];
+    const headers: string[] = [];
+    
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) {
+        // Extract headers
+        row.eachCell((cell, colNumber) => {
+          headers[colNumber - 1] = cell.value?.toString().trim() || `Column${colNumber}`;
+        });
+      } else {
+        // Extract data rows
+        const rowData: ParsedRow = {};
+        row.eachCell((cell, colNumber) => {
+          const header = headers[colNumber - 1];
+          if (header) {
+            rowData[header] = cell.value;
+          }
+        });
+        rows.push(rowData);
+      }
+    });
+    
+    return {
+      name: worksheet.name,
+      rows,
+    };
+  });
+  
   return { filename, sheets };
 }
 
 export async function parseCsvFile(file: File, filename: string): Promise<ParsedFile> {
+  const workbook = new ExcelJS.Workbook();
   const text = await file.text();
-  const wb = XLSX.read(text, { type: "string" });
-  const name = wb.SheetNames[0];
-  return { filename, sheets: [{ name, rows: XLSX.utils.sheet_to_json<ParsedRow>(wb.Sheets[name], { defval: null, raw: false }) }] };
+  
+  // Parse CSV manually since ExcelJS CSV parsing is limited
+  const lines = text.split('\n').filter(line => line.trim());
+  if (lines.length === 0) {
+    return { filename, sheets: [{ name: 'Sheet1', rows: [] }] };
+  }
+  
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  const rows: ParsedRow[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+    const row: ParsedRow = {};
+    
+    headers.forEach((header, index) => {
+      row[header] = values[index] || null;
+    });
+    
+    rows.push(row);
+  }
+  
+  return { filename, sheets: [{ name: 'Sheet1', rows }] };
 }
 
 export async function parseZipFile(file: File): Promise<ParsedFile[]> {
@@ -36,9 +83,8 @@ export async function parseZipFile(file: File): Promise<ParsedFile[]> {
       out.push(await parseExcelFile(blob, fname));
     } else if (lower.endsWith(".csv")) {
       const text = await entry.async("string");
-      const wb = XLSX.read(text, { type: "string" });
-      const name = wb.SheetNames[0];
-      out.push({ filename: fname, sheets: [{ name, rows: XLSX.utils.sheet_to_json<ParsedRow>(wb.Sheets[name], { defval: null, raw: false }) }] });
+      const tempFile = new File([text], fname, { type: 'text/csv' });
+      out.push(await parseCsvFile(tempFile, fname));
     }
   }
   return out;
