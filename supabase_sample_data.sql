@@ -199,16 +199,54 @@ END $$;
 COMMIT;
 
 -- ============================================================
--- VERIFY: show what was inserted (lookup by name — schema-safe)
+-- VERIFY: show what was inserted (fully schema-defensive)
+-- For each table, picks the first available identifier column and
+-- counts how many rows match, so it never references a missing column.
 -- ============================================================
-SELECT 'companies'   AS entity, name      AS label FROM public.companies   WHERE name = 'Sample Company TSI'
-UNION ALL SELECT 'locations',   name              FROM public.locations    WHERE name = 'Sample HQ'
-UNION ALL SELECT 'departments', name              FROM public.departments  WHERE name = 'Sample IT Department'
-UNION ALL SELECT 'categories',  name              FROM public.categories   WHERE name = 'Sample Laptop Category'
-UNION ALL SELECT 'vendors',     name              FROM public.vendors      WHERE name = 'Sample Vendor Co.'
-UNION ALL SELECT 'employees',   name              FROM public.employees    WHERE employee_code = 'SAMPLE-EMP-001'
-UNION ALL SELECT 'assets',      name              FROM public.assets       WHERE sap_code = 'SAMPLE-ASSET-001'
-UNION ALL SELECT 'licenses',    license_type      FROM public.licenses     WHERE license_key = 'SAMPLE-LIC-XXXX-XXXX-XXXX';
+DO $$
+DECLARE
+  v_specs JSONB := jsonb_build_array(
+    jsonb_build_object('table','companies',   'where_col','name',          'where_val','Sample Company TSI'),
+    jsonb_build_object('table','locations',   'where_col','name',          'where_val','Sample HQ'),
+    jsonb_build_object('table','departments', 'where_col','name',          'where_val','Sample IT Department'),
+    jsonb_build_object('table','categories',  'where_col','name',          'where_val','Sample Laptop Category'),
+    jsonb_build_object('table','vendors',     'where_col','name',          'where_val','Sample Vendor Co.'),
+    jsonb_build_object('table','employees',   'where_col','employee_code', 'where_val','SAMPLE-EMP-001'),
+    jsonb_build_object('table','assets',      'where_col','sap_code',      'where_val','SAMPLE-ASSET-001'),
+    jsonb_build_object('table','licenses',    'where_col','license_key',   'where_val','SAMPLE-LIC-XXXX-XXXX-XXXX')
+  );
+  v_spec   JSONB;
+  v_table  TEXT;
+  v_col    TEXT;
+  v_val    TEXT;
+  v_count  INT;
+  v_has_col BOOLEAN;
+BEGIN
+  RAISE NOTICE '';
+  RAISE NOTICE '=== Sample Data Verification ===';
+  FOR v_spec IN SELECT * FROM jsonb_array_elements(v_specs) LOOP
+    v_table := v_spec ->> 'table';
+    v_col   := v_spec ->> 'where_col';
+    v_val   := v_spec ->> 'where_val';
+
+    -- Verify the where_col exists; if not, fall back to counting all rows
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = v_table AND column_name = v_col
+    ) INTO v_has_col;
+
+    IF v_has_col THEN
+      EXECUTE format('SELECT COUNT(*) FROM public.%I WHERE %I = %L', v_table, v_col, v_val)
+        INTO v_count;
+      RAISE NOTICE '  % : % row(s) where %=%', rpad(v_table, 12), v_count, v_col, v_val;
+    ELSE
+      EXECUTE format('SELECT COUNT(*) FROM public.%I', v_table) INTO v_count;
+      RAISE NOTICE '  % : % total row(s)  (column "%" not found, showing total)',
+        rpad(v_table, 12), v_count, v_col;
+    END IF;
+  END LOOP;
+  RAISE NOTICE '================================';
+END $$;
 
 -- ============================================================
 -- 🗑️  ADMIN CLEANUP (run later to remove all sample data)
