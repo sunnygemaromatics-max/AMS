@@ -17,6 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { TsiLogo } from "@/components/TsiLogo";
 import {
   Sidebar,
   SidebarContent,
@@ -71,23 +72,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 border-b border-sidebar-border/50">
         {!collapsed && (
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-              <span className="text-sidebar-primary-foreground font-extrabold text-xs tracking-tight">TSI</span>
-            </div>
+          <div className="flex items-center gap-3 animate-fade-in">
+            <TsiLogo size={36} />
             <div>
-              <p className="font-bold text-sm text-sidebar-foreground">AMS</p>
-              <p className="text-xs text-sidebar-foreground/60">Asset Management</p>
+              <p className="font-bold text-sm tsi-gradient-text leading-tight">AMS</p>
+              <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Asset Management</p>
             </div>
           </div>
         )}
         {collapsed && (
-          <div className="flex justify-center">
-            <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-              <span className="text-sidebar-primary-foreground font-extrabold text-[10px] tracking-tight">TSI</span>
-            </div>
+          <div className="flex justify-center animate-fade-in">
+            <TsiLogo size={32} />
           </div>
         )}
       </SidebarHeader>
@@ -100,7 +97,7 @@ export function AppSidebar() {
               {mainNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} end={item.url === "/"} activeClassName="bg-sidebar-accent text-sidebar-primary">
+                    <NavLink to={item.url} end={item.url === "/"} activeClassName="bg-primary/10 text-primary font-semibold">
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -118,7 +115,7 @@ export function AppSidebar() {
               {dataNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} activeClassName="bg-sidebar-accent text-sidebar-primary">
+                    <NavLink to={item.url} activeClassName="bg-primary/10 text-primary font-semibold">
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -137,7 +134,7 @@ export function AppSidebar() {
                 {adminNav.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url} activeClassName="bg-sidebar-accent text-sidebar-primary">
+                      <NavLink to={item.url} activeClassName="bg-primary/10 text-primary font-semibold">
                         <item.icon className="h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
@@ -156,7 +153,7 @@ export function AppSidebar() {
               {systemNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} activeClassName="bg-sidebar-accent text-sidebar-primary">
+                    <NavLink to={item.url} activeClassName="bg-primary/10 text-primary font-semibold">
                       <item.icon className="h-4 w-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -168,13 +165,13 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 border-t border-sidebar-border/50">
         {!collapsed && (
           <div className="space-y-0.5">
-            <p className="text-[10px] text-sidebar-foreground/50 font-medium uppercase tracking-widest">
+            <p className="text-[10px] font-semibold uppercase tracking-widest tsi-gradient-text">
               Personify Crafters
             </p>
-            <p className="text-[10px] text-sidebar-foreground/30">
+            <p className="text-[10px] text-sidebar-foreground/40">
               v2.0 Enterprise AMS
             </p>
           </div>

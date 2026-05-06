@@ -7,7 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useNavigate } from "react-router-dom";
 
-const COLORS = ['hsl(220, 60%, 20%)', 'hsl(160, 60%, 40%)', 'hsl(38, 92%, 50%)', 'hsl(210, 80%, 52%)', 'hsl(0, 72%, 51%)', 'hsl(280, 60%, 50%)', 'hsl(30, 80%, 55%)', 'hsl(190, 70%, 45%)'];
+// TSI brand palette for charts (purple → magenta → rose → peach + accents)
+const COLORS = [
+  'hsl(265, 55%, 50%)',
+  'hsl(320, 65%, 60%)',
+  'hsl(340, 75%, 65%)',
+  'hsl(20, 85%, 70%)',
+  'hsl(220, 80%, 60%)',
+  'hsl(152, 60%, 45%)',
+  'hsl(35, 95%, 55%)',
+  'hsl(280, 60%, 60%)',
+];
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 export default function DashboardPage() {
@@ -29,9 +39,11 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Asset Management Overview</p>
+      <div className="animate-fade-in-up">
+        <h1 className="text-3xl font-bold tracking-tight">
+          <span className="tsi-gradient-text">Dashboard</span>
+        </h1>
+        <p className="text-muted-foreground text-sm mt-1">Asset Management Overview at a glance</p>
       </div>
 
       {/* KPI Row */}
@@ -44,7 +56,7 @@ export default function DashboardPage() {
 
       {/* Expiring Alerts */}
       {((stats?.expiringWarranties || []).length > 0 || (stats?.expiringLicenses || []).length > 0) && (
-        <Card className="border-warning/30 bg-warning/5">
+        <Card className="border-warning/30 bg-warning/5 animate-fade-in-up stagger-2">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-warning" />
@@ -70,8 +82,8 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Assets by Status */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Assets by Status</CardTitle></CardHeader>
+        <Card className="glass-card animate-fade-in-up stagger-3">
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full tsi-gradient" />Assets by Status</CardTitle></CardHeader>
           <CardContent>
             {statusData.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
@@ -80,7 +92,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 12 }} />
-                  <Bar dataKey="value" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="hsl(265 55% 50%)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="text-muted-foreground text-sm text-center py-12">No data yet.</p>}
@@ -88,8 +100,8 @@ export default function DashboardPage() {
         </Card>
 
         {/* Assets by Type */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Assets by Type</CardTitle></CardHeader>
+        <Card className="glass-card animate-fade-in-up stagger-4">
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full tsi-gradient" />Assets by Type</CardTitle></CardHeader>
           <CardContent>
             {(stats?.subtypeStats || []).length > 0 ? (
               <>

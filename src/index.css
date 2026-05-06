@@ -4,98 +4,103 @@
 
 @layer base {
   :root {
-    /* TSI Brand Colors - Exact Logo Colors */
-    --background: 220 35% 97%;
-    --foreground: 220 25% 12%;
+    /* TSI Elegant Light Theme — soft lavender/rose/peach palette from the logo */
+    --background: 250 100% 99%;
+    --foreground: 260 35% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
+    --card-foreground: 260 35% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
+    --popover-foreground: 260 35% 15%;
 
-    --primary: 250 65% 55%;
-    --primary-foreground: 220 25% 98%;
+    --primary: 265 55% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 25% 95%;
-    --secondary-foreground: 220 25% 12%;
+    --secondary: 280 30% 96%;
+    --secondary-foreground: 260 35% 20%;
 
-    --muted: 220 15% 93%;
-    --muted-foreground: 220 10% 48%;
+    --muted: 270 25% 95%;
+    --muted-foreground: 260 12% 50%;
 
-    --accent: 190 75% 65%;
-    --accent-foreground: 220 25% 98%;
+    --accent: 340 70% 65%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 86%;
-    --input: 220 20% 86%;
-    --ring: 250 65% 55%;
+    --border: 270 30% 90%;
+    --input: 270 30% 90%;
+    --ring: 265 55% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 250 65% 12%;
-    --sidebar-foreground: 220 20% 85%;
-    --sidebar-primary: 250 65% 55%;
-    --sidebar-primary-foreground: 220 25% 98%;
-    --sidebar-accent: 220 15% 18%;
-    --sidebar-accent-foreground: 220 20% 90%;
-    --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 250 65% 55%;
+    /* Sidebar — soft elegant white-glass with TSI purple accents */
+    --sidebar-background: 270 50% 98%;
+    --sidebar-foreground: 260 30% 25%;
+    --sidebar-primary: 265 55% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 280 50% 95%;
+    --sidebar-accent-foreground: 265 55% 35%;
+    --sidebar-border: 270 30% 90%;
+    --sidebar-ring: 265 55% 50%;
 
-    /* TSI Custom tokens from logo */
-    --success: 142 76% 36%;
+    /* Status tokens */
+    --success: 152 60% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 95% 50%;
+    --warning: 35 95% 55%;
     --warning-foreground: 0 0% 100%;
-    --info: 190 75% 65%;
+    --info: 220 80% 60%;
     --info-foreground: 0 0% 100%;
 
-    --kpi-1: 250 65% 55%;
-    --kpi-2: 190 75% 65%;
-    --kpi-3: 142 76% 36%;
-    --kpi-4: 32 95% 50%;
+    /* KPI gradient stops — direct from logo (purple → rose → peach) */
+    --kpi-1: 265 55% 50%;   /* deep purple */
+    --kpi-2: 320 65% 60%;   /* magenta-pink */
+    --kpi-3: 340 75% 65%;   /* rose */
+    --kpi-4: 20 85% 70%;    /* peach */
+
+    /* TSI signature gradient */
+    --tsi-gradient: linear-gradient(135deg, hsl(265 55% 50%) 0%, hsl(320 65% 60%) 50%, hsl(20 85% 70%) 100%);
+    --tsi-gradient-soft: linear-gradient(135deg, hsl(265 55% 50% / 0.1) 0%, hsl(320 65% 60% / 0.1) 50%, hsl(20 85% 70% / 0.1) 100%);
   }
 
   .dark {
-    /* TSI Dark Theme Colors - Logo Based */
-    --background: 250 65% 8%;
-    --foreground: 220 20% 90%;
+    --background: 260 30% 8%;
+    --foreground: 270 20% 92%;
 
-    --card: 250 65% 12%;
-    --card-foreground: 220 20% 90%;
+    --card: 260 25% 11%;
+    --card-foreground: 270 20% 92%;
 
-    --popover: 250 65% 12%;
-    --popover-foreground: 220 20% 90%;
+    --popover: 260 25% 11%;
+    --popover-foreground: 270 20% 92%;
 
-    --primary: 250 65% 65%;
-    --primary-foreground: 250 65% 8%;
+    --primary: 265 70% 70%;
+    --primary-foreground: 260 30% 8%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 220 20% 90%;
+    --secondary: 260 20% 16%;
+    --secondary-foreground: 270 20% 92%;
 
-    --muted: 220 10% 20%;
-    --muted-foreground: 220 8% 60%;
+    --muted: 260 15% 18%;
+    --muted-foreground: 270 10% 65%;
 
-    --accent: 190 75% 70%;
-    --accent-foreground: 250 65% 8%;
+    --accent: 340 75% 70%;
+    --accent-foreground: 260 30% 8%;
 
-    --destructive: 0 60% 45%;
+    --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 22%;
-    --input: 220 15% 22%;
-    --ring: 250 65% 65%;
+    --border: 260 20% 20%;
+    --input: 260 20% 20%;
+    --ring: 265 70% 70%;
 
-    --sidebar-background: 250 65% 6%;
-    --sidebar-foreground: 220 20% 80%;
-    --sidebar-primary: 250 65% 65%;
-    --sidebar-primary-foreground: 250 65% 8%;
-    --sidebar-accent: 220 15% 12%;
-    --sidebar-accent-foreground: 220 20% 90%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 250 65% 65%;
+    --sidebar-background: 260 30% 6%;
+    --sidebar-foreground: 270 20% 85%;
+    --sidebar-primary: 265 70% 70%;
+    --sidebar-primary-foreground: 260 30% 8%;
+    --sidebar-accent: 260 20% 14%;
+    --sidebar-accent-foreground: 270 20% 92%;
+    --sidebar-border: 260 20% 18%;
+    --sidebar-ring: 265 70% 70%;
   }
 }
 
@@ -103,23 +108,204 @@
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-image:
+      radial-gradient(at 12% 8%, hsl(265 55% 50% / 0.06) 0px, transparent 45%),
+      radial-gradient(at 88% 18%, hsl(340 70% 65% / 0.06) 0px, transparent 45%),
+      radial-gradient(at 75% 92%, hsl(20 85% 70% / 0.05) 0px, transparent 45%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: hsl(265 55% 50% / 0.25);
+    color: hsl(260 35% 15%);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted) / 0.3);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, hsl(265 55% 60% / 0.5), hsl(340 70% 65% / 0.5));
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, hsl(265 55% 60% / 0.8), hsl(340 70% 65% / 0.8));
   }
 }
 
 @layer utilities {
+  /* === KPI Gradients (TSI logo palette) === */
   .kpi-gradient-1 {
-    background: linear-gradient(135deg, hsl(var(--kpi-1)), hsl(250 55% 45%));
+    background: linear-gradient(135deg, hsl(265 55% 50%) 0%, hsl(280 60% 55%) 100%);
   }
   .kpi-gradient-2 {
-    background: linear-gradient(135deg, hsl(var(--kpi-2)), hsl(190 65% 55%));
+    background: linear-gradient(135deg, hsl(320 65% 60%) 0%, hsl(340 70% 65%) 100%);
   }
   .kpi-gradient-3 {
-    background: linear-gradient(135deg, hsl(var(--kpi-3)), hsl(142 65% 45%));
+    background: linear-gradient(135deg, hsl(340 75% 65%) 0%, hsl(355 80% 70%) 100%);
   }
   .kpi-gradient-4 {
-    background: linear-gradient(135deg, hsl(var(--kpi-4)), hsl(32 85% 55%));
+    background: linear-gradient(135deg, hsl(20 85% 70%) 0%, hsl(35 90% 70%) 100%);
+  }
+
+  /* === Glass Morphism === */
+  .glass {
+    background: hsl(0 0% 100% / 0.6);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.5);
+    box-shadow: 0 8px 32px hsl(265 55% 50% / 0.08);
+  }
+  .glass-strong {
+    background: hsl(0 0% 100% / 0.8);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.6);
+    box-shadow: 0 8px 32px hsl(265 55% 50% / 0.1);
+  }
+  .glass-card {
+    background: linear-gradient(135deg, hsl(0 0% 100% / 0.85) 0%, hsl(270 50% 98% / 0.7) 100%);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid hsl(270 30% 95%);
+    box-shadow:
+      0 1px 2px hsl(265 55% 50% / 0.04),
+      0 4px 16px hsl(265 55% 50% / 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glass-card:hover {
+    box-shadow:
+      0 4px 12px hsl(265 55% 50% / 0.08),
+      0 12px 32px hsl(265 55% 50% / 0.12);
+    transform: translateY(-2px);
+    border-color: hsl(265 55% 70% / 0.4);
+  }
+  .dark .glass {
+    background: hsl(260 25% 11% / 0.6);
+    border: 1px solid hsl(260 25% 20% / 0.5);
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.3);
+  }
+  .dark .glass-strong {
+    background: hsl(260 25% 11% / 0.85);
+    border: 1px solid hsl(260 25% 25% / 0.6);
+  }
+  .dark .glass-card {
+    background: linear-gradient(135deg, hsl(260 25% 11% / 0.85) 0%, hsl(260 25% 14% / 0.7) 100%);
+    border: 1px solid hsl(260 25% 20%);
+  }
+
+  /* === TSI Brand Gradient Utilities === */
+  .tsi-gradient {
+    background: var(--tsi-gradient);
+  }
+  .tsi-gradient-text {
+    background: var(--tsi-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .tsi-gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+  }
+  .tsi-gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--tsi-gradient);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* === Animations === */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(265 55% 50% / 0.4); }
+    50%      { box-shadow: 0 0 0 12px hsl(265 55% 50% / 0); }
+  }
+
+  .animate-fade-in        { animation: fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .animate-fade-in-up     { animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .animate-scale-in       { animation: scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .animate-slide-in-right { animation: slide-in-right 0.4s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .animate-float          { animation: float 4s ease-in-out infinite; }
+  .animate-gradient       { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
+  .animate-pulse-glow     { animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+  /* Stagger helpers */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-6 { animation-delay: 0.3s; }
+
+  /* Skeleton shimmer */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* Hover lift utility */
+  .hover-lift {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px hsl(265 55% 50% / 0.12);
   }
 }
+
