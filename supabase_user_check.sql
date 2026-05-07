@@ -19,7 +19,6 @@ SELECT
 
 SELECT 
   role,
-  assigned_by,
   created_at
 FROM public.user_roles 
 WHERE user_id = auth.uid();
