@@ -1,53 +1,101 @@
 -- ============================================================
--- DIAGNOSE: Single consolidated diagnostic — all info in ONE result
--- Run this in Supabase SQL Editor; share a screenshot of the table.
+-- DIAGNOSE: Schema-defensive single-result diagnostic
+-- Run in Supabase SQL Editor; share screenshot of the result.
 -- ============================================================
 
-WITH counts AS (
-  SELECT 'companies'   AS t, (SELECT COUNT(*)::int FROM public.companies)   AS total,
-         (SELECT COUNT(*)::int FROM public.companies   WHERE is_active=true) AS visible_to_app
-  UNION ALL SELECT 'locations',   (SELECT COUNT(*)::int FROM public.locations),
-         (SELECT COUNT(*)::int FROM public.locations   WHERE is_active=true)
-  UNION ALL SELECT 'departments', (SELECT COUNT(*)::int FROM public.departments),
-         (SELECT COUNT(*)::int FROM public.departments WHERE is_active=true)
-  UNION ALL SELECT 'categories',  (SELECT COUNT(*)::int FROM public.categories),
-         (SELECT COUNT(*)::int FROM public.categories)  -- no is_active filter in hook
-  UNION ALL SELECT 'vendors',     (SELECT COUNT(*)::int FROM public.vendors),
-         (SELECT COUNT(*)::int FROM public.vendors     WHERE is_active=true)
-  UNION ALL SELECT 'employees',   (SELECT COUNT(*)::int FROM public.employees),
-         (SELECT COUNT(*)::int FROM public.employees   WHERE is_active=true)
-  UNION ALL SELECT 'assets',      (SELECT COUNT(*)::int FROM public.assets),
-         (SELECT COUNT(*)::int FROM public.assets      WHERE is_deleted=false)
-  UNION ALL SELECT 'licenses',    (SELECT COUNT(*)::int FROM public.licenses),
-         (SELECT COUNT(*)::int FROM public.licenses)   -- no filter in hook
-),
-sample_rows AS (
-  SELECT 'companies'   AS t, EXISTS(SELECT 1 FROM public.companies   WHERE name = 'Sample Company TSI')      AS sample_present
-  UNION ALL SELECT 'locations',   EXISTS(SELECT 1 FROM public.locations    WHERE name = 'Sample HQ')
-  UNION ALL SELECT 'departments', EXISTS(SELECT 1 FROM public.departments  WHERE name = 'Sample IT Department')
-  UNION ALL SELECT 'categories',  EXISTS(SELECT 1 FROM public.categories   WHERE name = 'Sample Laptop Category')
-  UNION ALL SELECT 'vendors',     EXISTS(SELECT 1 FROM public.vendors      WHERE name = 'Sample Vendor Co.')
-  UNION ALL SELECT 'employees',   EXISTS(SELECT 1 FROM public.employees    WHERE employee_code = 'SAMPLE-EMP-001')
-  UNION ALL SELECT 'assets',      EXISTS(SELECT 1 FROM public.assets       WHERE sap_code = 'SAMPLE-ASSET-001')
-  UNION ALL SELECT 'licenses',    EXISTS(SELECT 1 FROM public.licenses     WHERE id IS NOT NULL)  -- any row
-),
-rls AS (
-  SELECT tablename AS t,
-         rowsecurity AS rls_on,
-         (SELECT COUNT(*)::int FROM pg_policies p
-            WHERE p.schemaname='public' AND p.tablename=pt.tablename) AS policies
-  FROM pg_tables pt
-  WHERE schemaname='public'
-    AND tablename IN ('companies','locations','departments','categories','vendors','employees','assets','licenses')
-)
-SELECT
-  c.t                       AS table_name,
-  c.total                   AS total_rows,
-  c.visible_to_app          AS rows_app_can_see,
-  s.sample_present          AS sample_row_in_db,
-  r.rls_on                  AS rls_enabled,
-  r.policies                AS rls_policy_count
-FROM counts c
-LEFT JOIN sample_rows s ON s.t = c.t
-LEFT JOIN rls r        ON r.t = c.t
-ORDER BY c.t;
+DO $$
+DECLARE
+  spec  JSONB := jsonb_build_array(
+    -- table, sample_col, sample_val, filter_col, filter_val
+    jsonb_build_array('companies',   'name',          'Sample Company TSI',      'is_active',  'true'),
+    jsonb_build_array('locations',   'name',          'Sample HQ',               'is_active',  'true'),
+    jsonb_build_array('departments', 'name',          'Sample IT Department',    'is_active',  'true'),
+    jsonb_build_array('categories',  'name',          'Sample Laptop Category',  NULL,         NULL),
+    jsonb_build_array('vendors',     'name',          'Sample Vendor Co.',       'is_active',  'true'),
+    jsonb_build_array('employees',   'employee_code', 'SAMPLE-EMP-001',          'is_active',  'true'),
+    jsonb_build_array('assets',      'sap_code',      'SAMPLE-ASSET-001',        'is_deleted', 'false'),
+    jsonb_build_array('licenses',    NULL,            NULL,                      NULL,         NULL)
+  );
+  s            JSONB;
+  v_table      TEXT;
+  v_sample_col TEXT;
+  v_sample_val TEXT;
+  v_filter_col TEXT;
+  v_filter_val TEXT;
+  v_total      INT;
+  v_visible    INT;
+  v_sample     BOOLEAN;
+  v_rls_on     BOOLEAN;
+  v_policies   INT;
+  v_has_filter BOOLEAN;
+  v_has_sample BOOLEAN;
+BEGIN
+  -- Build a temp table to collect rows
+  DROP TABLE IF EXISTS _diag;
+  CREATE TEMP TABLE _diag (
+    table_name        TEXT,
+    total_rows        INT,
+    rows_app_can_see  INT,
+    sample_row_in_db  TEXT,
+    rls_enabled       BOOLEAN,
+    rls_policy_count  INT
+  );
+
+  FOR s IN SELECT * FROM jsonb_array_elements(spec) LOOP
+    v_table      := s ->> 0;
+    v_sample_col := s ->> 1;
+    v_sample_val := s ->> 2;
+    v_filter_col := s ->> 3;
+    v_filter_val := s ->> 4;
+
+    -- total
+    EXECUTE format('SELECT COUNT(*) FROM public.%I', v_table) INTO v_total;
+
+    -- visible to app (filter only if column exists)
+    IF v_filter_col IS NOT NULL THEN
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name=v_table AND column_name=v_filter_col
+      ) INTO v_has_filter;
+      IF v_has_filter THEN
+        EXECUTE format('SELECT COUNT(*) FROM public.%I WHERE %I = %L',
+                       v_table, v_filter_col, v_filter_val) INTO v_visible;
+      ELSE
+        v_visible := v_total;  -- no filter column means hook would error or skip filter
+      END IF;
+    ELSE
+      v_visible := v_total;
+    END IF;
+
+    -- sample row presence (if column exists)
+    IF v_sample_col IS NOT NULL THEN
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema='public' AND table_name=v_table AND column_name=v_sample_col
+      ) INTO v_has_sample;
+      IF v_has_sample THEN
+        EXECUTE format('SELECT EXISTS(SELECT 1 FROM public.%I WHERE %I = %L)',
+                       v_table, v_sample_col, v_sample_val) INTO v_sample;
+      ELSE
+        v_sample := NULL;
+      END IF;
+    ELSE
+      v_sample := NULL;
+    END IF;
+
+    -- RLS info
+    SELECT rowsecurity INTO v_rls_on FROM pg_tables
+      WHERE schemaname='public' AND tablename=v_table;
+    SELECT COUNT(*)::int INTO v_policies FROM pg_policies
+      WHERE schemaname='public' AND tablename=v_table;
+
+    INSERT INTO _diag VALUES (
+      v_table, v_total, v_visible,
+      CASE WHEN v_sample IS NULL THEN 'n/a'
+           WHEN v_sample THEN 'YES' ELSE 'no' END,
+      v_rls_on, v_policies
+    );
+  END LOOP;
+END $$;
+
+SELECT * FROM _diag ORDER BY table_name;
