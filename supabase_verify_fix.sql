@@ -2,43 +2,37 @@
 -- VERIFY APPROVAL STATUS — Check what's actually in the database
 -- ============================================================
 
--- 1. Show your actual user ID
-SELECT auth.uid() as your_current_user_id;
+-- IMPORTANT: Replace with your actual user ID from auth.users
+-- Or run: SELECT id, email FROM auth.users WHERE email = 'your@email.com';
 
--- 2. Check your profile record
+-- 1. First, find your user ID by email
+SELECT id, email FROM auth.users WHERE email LIKE '%sunny%' LIMIT 5;
+
+-- 2. After getting your user_id from above, replace YOUR_USER_ID below and uncomment:
+-- UPDATE public.profiles 
+-- SET approval_status = 'approved', approved_at = now() 
+-- WHERE id = 'YOUR_USER_ID';
+
+-- 3. Add admin role (replace YOUR_USER_ID):
+-- INSERT INTO public.user_roles (user_id, role) 
+-- VALUES ('YOUR_USER_ID', 'admin') 
+-- ON CONFLICT DO NOTHING;
+
+-- 4. Check all profiles to find yours
 SELECT 
   id, 
   full_name, 
   approval_status, 
-  approved_at,
-  created_at
+  approved_at
 FROM public.profiles 
-WHERE id = auth.uid();
+LIMIT 10;
 
--- 3. Check your roles
+-- 5. Check all user roles
 SELECT 
   user_id,
   role
 FROM public.user_roles 
-WHERE user_id = auth.uid();
+LIMIT 10;
 
--- 4. If profile doesn't exist, create it
-INSERT INTO public.profiles (id, full_name, approval_status, approved_at)
-SELECT 
-  auth.uid(),
-  COALESCE((SELECT email FROM auth.users WHERE id = auth.uid()), 'Unknown'),
-  'approved',
-  now()
-WHERE NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid());
-
--- 5. Add admin role if not exists
-INSERT INTO public.user_roles (user_id, role) 
-VALUES (auth.uid(), 'admin') 
-ON CONFLICT DO NOTHING;
-
--- 6. Re-verify
-SELECT 
-  'After fix attempt:' as check_point,
-  public.has_role(auth.uid(), 'admin') as has_admin,
-  public.is_approved(auth.uid()) as is_approved,
-  public.can_write_assets(auth.uid()) as can_write;
+-- 6. Show latest auth users
+SELECT id, email, created_at FROM auth.users ORDER BY created_at DESC LIMIT 5;
