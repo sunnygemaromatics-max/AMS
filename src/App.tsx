@@ -39,7 +39,7 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000,          // keep in memory 10 min
       refetchOnWindowFocus: false,     // <-- biggest perf win: stop refetching on tab-switch
       refetchOnReconnect: false,
-      refetchOnMount: false,           // use cached data when remounting same query
+      // refetchOnMount default (true) = refetch only if stale; respects staleTime
     },
     mutations: { retry: 0 },
   },
