@@ -70,7 +70,7 @@ ORDER BY tablename;
 SELECT
   u.email,
   ur.role,
-  ur.created_at
+  u.created_at AS user_created_at
 FROM auth.users u
 LEFT JOIN public.user_roles ur ON ur.user_id = u.id
 ORDER BY u.created_at DESC
