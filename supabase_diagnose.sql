@@ -1,77 +1,53 @@
 -- ============================================================
--- DIAGNOSE: Why data isn't showing in the app
--- Run this in Supabase SQL Editor and share the output.
+-- DIAGNOSE: Single consolidated diagnostic — all info in ONE result
+-- Run this in Supabase SQL Editor; share a screenshot of the table.
 -- ============================================================
 
--- 1. Row counts per table (raw, ignores filters)
-SELECT 'companies'   AS table_name, COUNT(*) AS total FROM public.companies
-UNION ALL SELECT 'locations',         COUNT(*) FROM public.locations
-UNION ALL SELECT 'departments',       COUNT(*) FROM public.departments
-UNION ALL SELECT 'categories',        COUNT(*) FROM public.categories
-UNION ALL SELECT 'vendors',           COUNT(*) FROM public.vendors
-UNION ALL SELECT 'employees',         COUNT(*) FROM public.employees
-UNION ALL SELECT 'assets',            COUNT(*) FROM public.assets
-UNION ALL SELECT 'licenses',          COUNT(*) FROM public.licenses
-ORDER BY table_name;
-
--- 2. Active vs total counts (the app filters by is_active = true on most tables)
-DO $$
-DECLARE
-  v_tables TEXT[] := ARRAY['companies','locations','departments','vendors','employees'];
-  v_t TEXT;
-  v_total INT;
-  v_active INT;
-  v_has_active BOOLEAN;
-BEGIN
-  RAISE NOTICE '=== Active row counts (the app only shows active rows) ===';
-  FOREACH v_t IN ARRAY v_tables LOOP
-    SELECT EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_schema='public' AND table_name=v_t AND column_name='is_active'
-    ) INTO v_has_active;
-    EXECUTE format('SELECT COUNT(*) FROM public.%I', v_t) INTO v_total;
-    IF v_has_active THEN
-      EXECUTE format('SELECT COUNT(*) FROM public.%I WHERE is_active=true', v_t) INTO v_active;
-      RAISE NOTICE '  % : % active / % total', rpad(v_t,12), v_active, v_total;
-    ELSE
-      RAISE NOTICE '  % : % total (no is_active column)', rpad(v_t,12), v_total;
-    END IF;
-  END LOOP;
-
-  -- assets uses is_deleted=false instead
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='assets' AND column_name='is_deleted') THEN
-    EXECUTE 'SELECT COUNT(*) FROM public.assets WHERE is_deleted=false' INTO v_active;
-    EXECUTE 'SELECT COUNT(*) FROM public.assets' INTO v_total;
-    RAISE NOTICE '  assets       : % visible (is_deleted=false) / % total', v_active, v_total;
-  END IF;
-END $$;
-
--- 3. Show your sample rows specifically
-SELECT 'company'  AS entity, name AS info FROM public.companies   WHERE name = 'Sample Company TSI'
-UNION ALL SELECT 'location',   name FROM public.locations    WHERE name = 'Sample HQ'
-UNION ALL SELECT 'department', name FROM public.departments  WHERE name = 'Sample IT Department'
-UNION ALL SELECT 'category',   name FROM public.categories   WHERE name = 'Sample Laptop Category'
-UNION ALL SELECT 'vendor',     name FROM public.vendors      WHERE name = 'Sample Vendor Co.'
-UNION ALL SELECT 'employee',   name FROM public.employees    WHERE employee_code = 'SAMPLE-EMP-001'
-UNION ALL SELECT 'asset',      name FROM public.assets       WHERE sap_code = 'SAMPLE-ASSET-001';
-
--- 4. RLS status — if any of these are TRUE without policies, the app sees nothing
+WITH counts AS (
+  SELECT 'companies'   AS t, (SELECT COUNT(*)::int FROM public.companies)   AS total,
+         (SELECT COUNT(*)::int FROM public.companies   WHERE is_active=true) AS visible_to_app
+  UNION ALL SELECT 'locations',   (SELECT COUNT(*)::int FROM public.locations),
+         (SELECT COUNT(*)::int FROM public.locations   WHERE is_active=true)
+  UNION ALL SELECT 'departments', (SELECT COUNT(*)::int FROM public.departments),
+         (SELECT COUNT(*)::int FROM public.departments WHERE is_active=true)
+  UNION ALL SELECT 'categories',  (SELECT COUNT(*)::int FROM public.categories),
+         (SELECT COUNT(*)::int FROM public.categories)  -- no is_active filter in hook
+  UNION ALL SELECT 'vendors',     (SELECT COUNT(*)::int FROM public.vendors),
+         (SELECT COUNT(*)::int FROM public.vendors     WHERE is_active=true)
+  UNION ALL SELECT 'employees',   (SELECT COUNT(*)::int FROM public.employees),
+         (SELECT COUNT(*)::int FROM public.employees   WHERE is_active=true)
+  UNION ALL SELECT 'assets',      (SELECT COUNT(*)::int FROM public.assets),
+         (SELECT COUNT(*)::int FROM public.assets      WHERE is_deleted=false)
+  UNION ALL SELECT 'licenses',    (SELECT COUNT(*)::int FROM public.licenses),
+         (SELECT COUNT(*)::int FROM public.licenses)   -- no filter in hook
+),
+sample_rows AS (
+  SELECT 'companies'   AS t, EXISTS(SELECT 1 FROM public.companies   WHERE name = 'Sample Company TSI')      AS sample_present
+  UNION ALL SELECT 'locations',   EXISTS(SELECT 1 FROM public.locations    WHERE name = 'Sample HQ')
+  UNION ALL SELECT 'departments', EXISTS(SELECT 1 FROM public.departments  WHERE name = 'Sample IT Department')
+  UNION ALL SELECT 'categories',  EXISTS(SELECT 1 FROM public.categories   WHERE name = 'Sample Laptop Category')
+  UNION ALL SELECT 'vendors',     EXISTS(SELECT 1 FROM public.vendors      WHERE name = 'Sample Vendor Co.')
+  UNION ALL SELECT 'employees',   EXISTS(SELECT 1 FROM public.employees    WHERE employee_code = 'SAMPLE-EMP-001')
+  UNION ALL SELECT 'assets',      EXISTS(SELECT 1 FROM public.assets       WHERE sap_code = 'SAMPLE-ASSET-001')
+  UNION ALL SELECT 'licenses',    EXISTS(SELECT 1 FROM public.licenses     WHERE id IS NOT NULL)  -- any row
+),
+rls AS (
+  SELECT tablename AS t,
+         rowsecurity AS rls_on,
+         (SELECT COUNT(*)::int FROM pg_policies p
+            WHERE p.schemaname='public' AND p.tablename=pt.tablename) AS policies
+  FROM pg_tables pt
+  WHERE schemaname='public'
+    AND tablename IN ('companies','locations','departments','categories','vendors','employees','assets','licenses')
+)
 SELECT
-  schemaname || '.' || tablename AS table_name,
-  rowsecurity                    AS rls_enabled,
-  (SELECT COUNT(*) FROM pg_policies p
-    WHERE p.schemaname=t.schemaname AND p.tablename=t.tablename) AS policy_count
-FROM pg_tables t
-WHERE schemaname='public'
-  AND tablename IN ('companies','locations','departments','categories','vendors','employees','assets','licenses')
-ORDER BY tablename;
-
--- 5. Your auth user's roles (the app's RLS policies usually check user_roles)
-SELECT
-  u.email,
-  ur.role,
-  u.created_at AS user_created_at
-FROM auth.users u
-LEFT JOIN public.user_roles ur ON ur.user_id = u.id
-ORDER BY u.created_at DESC
-LIMIT 10;
+  c.t                       AS table_name,
+  c.total                   AS total_rows,
+  c.visible_to_app          AS rows_app_can_see,
+  s.sample_present          AS sample_row_in_db,
+  r.rls_on                  AS rls_enabled,
+  r.policies                AS rls_policy_count
+FROM counts c
+LEFT JOIN sample_rows s ON s.t = c.t
+LEFT JOIN rls r        ON r.t = c.t
+ORDER BY c.t;
