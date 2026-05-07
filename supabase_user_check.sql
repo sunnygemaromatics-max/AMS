@@ -18,8 +18,7 @@ SELECT
   '=== YOUR ROLES ===' as section;
 
 SELECT 
-  role,
-  created_at
+  role
 FROM public.user_roles 
 WHERE user_id = auth.uid();
 
