@@ -6,17 +6,16 @@
 SELECT id, email FROM auth.users WHERE email LIKE '%sunny%';
 
 -- 2. If profile doesn't exist, create it with correct UUID
-INSERT INTO public.profiles (id, full_name, approval_status, approved_at, created_at, updated_at)
+INSERT INTO public.profiles (id, full_name, approval_status, approved_at, created_at)
 VALUES (
   'ed8feb2f-7c4a-4a76-b72f-729775b45271', 
   'sunny.sobhani90@gmail.com', 
   'approved', 
   now(),
-  now(),
   now()
 )
 ON CONFLICT (id) DO UPDATE 
-SET approval_status = 'approved', approved_at = now(), updated_at = now();
+SET approval_status = 'approved', approved_at = now();
 
 -- 3. Add admin role
 INSERT INTO public.user_roles (user_id, role, created_at) 
