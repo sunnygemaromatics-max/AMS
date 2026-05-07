@@ -33,7 +33,15 @@ const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 2, staleTime: 30_000 },
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000,        // 5 min — don't refetch fresh data
+      gcTime: 10 * 60 * 1000,          // keep in memory 10 min
+      refetchOnWindowFocus: false,     // <-- biggest perf win: stop refetching on tab-switch
+      refetchOnReconnect: false,
+      refetchOnMount: false,           // use cached data when remounting same query
+    },
+    mutations: { retry: 0 },
   },
 });
 

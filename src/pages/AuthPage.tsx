@@ -137,9 +137,6 @@ export default function AuthPage() {
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex bg-background relative overflow-hidden">
-      {/* Animated background blobs */}
-      <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full tsi-gradient opacity-20 blur-3xl animate-float" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 rounded-full tsi-gradient opacity-20 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
 
       {/* Left branding panel */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden tsi-gradient">

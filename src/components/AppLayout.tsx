@@ -80,7 +80,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </main>
             <footer className="shrink-0 border-t border-border/50 glass px-6 py-3 flex items-center justify-between">
               <span className="text-xs text-muted-foreground flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full tsi-gradient animate-pulse-glow" />
+                <span className="inline-block h-2 w-2 rounded-full tsi-gradient" />
                 AMS v2.0 &mdash; The Studio Infinito
               </span>
               <span className="text-xs text-muted-foreground">
