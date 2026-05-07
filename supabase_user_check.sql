@@ -41,43 +41,23 @@ SELECT
 
 SELECT 
   'companies' as table_name,
-  (SELECT COUNT(*) FROM public.companies) as total_rows,
-  CASE WHEN public.is_approved(auth.uid()) 
-    THEN (SELECT COUNT(*) FROM public.companies WHERE is_active = true)
-    ELSE 0 
-  END as visible_active_rows;
+  (SELECT COUNT(*) FROM public.companies) as total_rows;
 
 SELECT 
   'locations' as table_name,
-  (SELECT COUNT(*) FROM public.locations) as total_rows,
-  CASE WHEN public.is_approved(auth.uid()) 
-    THEN (SELECT COUNT(*) FROM public.locations WHERE is_active = true)
-    ELSE 0 
-  END as visible_active_rows;
+  (SELECT COUNT(*) FROM public.locations) as total_rows;
 
 SELECT 
   'departments' as table_name,
-  (SELECT COUNT(*) FROM public.departments) as total_rows,
-  CASE WHEN public.is_approved(auth.uid()) 
-    THEN (SELECT COUNT(*) FROM public.departments WHERE is_active = true)
-    ELSE 0 
-  END as visible_active_rows;
+  (SELECT COUNT(*) FROM public.departments) as total_rows;
 
 SELECT 
   'employees' as table_name,
-  (SELECT COUNT(*) FROM public.employees) as total_rows,
-  CASE WHEN public.is_approved(auth.uid()) 
-    THEN (SELECT COUNT(*) FROM public.employees WHERE is_active = true)
-    ELSE 0 
-  END as visible_active_rows;
+  (SELECT COUNT(*) FROM public.employees) as total_rows;
 
 SELECT 
   'assets' as table_name,
-  (SELECT COUNT(*) FROM public.assets) as total_rows,
-  CASE WHEN public.is_approved(auth.uid()) 
-    THEN (SELECT COUNT(*) FROM public.assets WHERE is_deleted = false)
-    ELSE 0 
-  END as visible_active_rows;
+  (SELECT COUNT(*) FROM public.assets) as total_rows;
 
 SELECT 
   '=== RLS POLICIES ON LOCATIONS ===' as section;
