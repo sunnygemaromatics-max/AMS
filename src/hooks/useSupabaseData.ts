@@ -54,13 +54,24 @@ function invalidate(qc: ReturnType<typeof useQueryClient>, ...keys: string[]) {
 // ASSETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Embed selector that explicitly names the FK column so PostgREST never
+// has to guess — works even if multiple FKs exist between two tables.
+const ASSET_EMBED =
+  "*, " +
+  "employees:current_employee_id(name, employee_code, department), " +
+  "locations:current_location_id(name, code), " +
+  "vendors:vendor_id(name), " +
+  "categories:category_id(name, code), " +
+  "departments:department_id(name, code), " +
+  "companies:company_id(name)";
+
 export function useAssets() {
   return useQuery({
     queryKey: ["assets"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select("*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code), companies(name)")
+        .select(ASSET_EMBED)
         .eq("is_deleted", false)
         .order("bin_card_no");
       if (error) throw error;
@@ -75,7 +86,7 @@ export function useAsset(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("assets")
-        .select("*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code), companies(name)")
+        .select(ASSET_EMBED)
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -128,7 +139,12 @@ export function useEmployees() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("*, locations(name), companies(name), departments(name)")
+        .select(
+          "*, " +
+          "locations:location_id(name), " +
+          "companies:company_id(name), " +
+          "departments:department_id(name)"
+        )
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
@@ -178,7 +194,11 @@ export function useLocations() {
   return useQuery({
     queryKey: ["locations"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("locations").select("*, companies(name)").eq("is_active", true).order("name");
+      const { data, error } = await supabase
+        .from("locations")
+        .select("*, companies:company_id(name)")
+        .eq("is_active", true)
+        .order("name");
       if (error) throw error;
       return data;
     },
@@ -372,7 +392,11 @@ export function useDepartments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("departments")
-        .select("*, companies(name), locations(name)")
+        .select(
+          "*, " +
+          "companies:company_id(name), " +
+          "locations:location_id(name)"
+        )
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
@@ -424,7 +448,13 @@ export function useLicenses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("licenses")
-        .select("*, employees:assigned_employee_id(name, employee_code), assets:assigned_asset_id(sap_code, name), companies(name), locations(name)")
+        .select(
+          "*, " +
+          "employees:assigned_employee_id(name, employee_code), " +
+          "assets:assigned_asset_id(sap_code, name), " +
+          "companies:company_id(name), " +
+          "locations:location_id(name)"
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -473,9 +503,16 @@ export function useAssetTransactions(assetId?: string) {
   return useQuery({
     queryKey: ["transactions", assetId],
     queryFn: async () => {
+      // Keep field names `employees` / `locations` (consumed by PDF export &
+      // BinCardsPage) but pin to the to_* FK so PostgREST never has to guess.
       let query = supabase
         .from("asset_transactions")
-        .select("*, assets(sap_code, name), employees!asset_transactions_to_employee_id_fkey(name), locations!asset_transactions_to_location_id_fkey(name)")
+        .select(
+          "*, " +
+          "assets:asset_id(sap_code, name), " +
+          "employees:to_employee_id(name), " +
+          "locations:to_location_id(name)"
+        )
         .order("created_at", { ascending: false });
       if (assetId) query = query.eq("asset_id", assetId);
       const { data, error } = await query.limit(100);
