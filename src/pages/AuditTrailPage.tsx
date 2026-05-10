@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,20 @@ import {
   Trash2,
   ArrowRight,
   Download,
-  Eye
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  Printer,
+  X,
+  ChevronDown,
+  RefreshCw,
+  Globe,
+  Monitor,
+  Smartphone,
+  MapPin,
+  Building2,
+  Key,
+  Shield
 } from "lucide-react";
 import {
   Select,
@@ -31,63 +44,206 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Mock audit log entry - will be replaced with real data
+// Comprehensive audit log entry with all details
 interface AuditEntry {
   id: string;
   timestamp: string;
+  date: string;
+  time: string;
   user: string;
+  userId: string;
   userRole: string;
+  userDepartment: string;
   action: 'INSERT' | 'UPDATE' | 'DELETE';
   table: string;
+  tableLabel: string;
   recordId: string;
   recordName: string;
+  recordCode: string;
+  description: string;
   changes: {
     field: string;
+    fieldLabel: string;
     oldValue: string;
     newValue: string;
+    dataType: string;
   }[];
-  ipAddress?: string;
+  ipAddress: string;
+  userAgent: string;
+  deviceType: 'desktop' | 'mobile' | 'tablet';
+  browser: string;
+  os: string;
+  location: string;
+  sessionId: string;
+  requestMethod: string;
+  apiEndpoint: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  notes: string;
+  tags: string[];
 }
 
+// Comprehensive mock data with all details
 const mockAuditData: AuditEntry[] = [
   {
     id: "1",
     timestamp: "2024-01-15 10:30:45",
-    user: "Admin User",
+    date: "2024-01-15",
+    time: "10:30:45",
+    user: "Sunny Sobhani",
+    userId: "usr-001",
     userRole: "admin",
+    userDepartment: "IT Administration",
     action: "INSERT",
     table: "assets",
+    tableLabel: "Assets",
     recordId: "asset-001",
-    recordName: "MCD-01 - Dell Desktop",
+    recordName: "Dell OptiPlex 7090 Desktop",
+    recordCode: "MCD-01",
+    description: "Created new desktop asset for Mumbai office",
     changes: [],
-    ipAddress: "192.168.1.100"
+    ipAddress: "192.168.1.100",
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+    deviceType: "desktop",
+    browser: "Chrome 120",
+    os: "Windows 11",
+    location: "Mumbai Office - Floor 3",
+    sessionId: "sess-20240115-001",
+    requestMethod: "POST",
+    apiEndpoint: "/api/assets",
+    severity: "medium",
+    notes: "Asset imported from SAP B1 CSV",
+    tags: ["import", "desktop", "mumbai"]
   },
   {
     id: "2",
     timestamp: "2024-01-15 14:22:10",
-    user: "IT Manager",
+    date: "2024-01-15",
+    time: "14:22:10",
+    user: "Rajesh Kumar",
+    userId: "usr-002",
     userRole: "it",
+    userDepartment: "IT Support",
     action: "UPDATE",
     table: "assets",
+    tableLabel: "Assets",
     recordId: "asset-001",
-    recordName: "MCD-01 - Dell Desktop",
+    recordName: "Dell OptiPlex 7090 Desktop",
+    recordCode: "MCD-01",
+    description: "Assigned asset to employee and updated status",
     changes: [
-      { field: "status", oldValue: "available", newValue: "allocated" },
-      { field: "assigned_to", oldValue: "—", newValue: "John Doe" }
+      { field: "status", fieldLabel: "Status", oldValue: "available", newValue: "allocated", dataType: "enum" },
+      { field: "assigned_to", fieldLabel: "Assigned To", oldValue: "—", newValue: "Amit Sharma (EMP-1023)", dataType: "relation" },
+      { field: "location_id", fieldLabel: "Location", oldValue: "Storage Room A", newValue: "Finance Department - Desk 12", dataType: "relation" },
+      { field: "assigned_date", fieldLabel: "Assigned Date", oldValue: "—", newValue: "2024-01-15", dataType: "date" }
     ],
-    ipAddress: "192.168.1.105"
+    ipAddress: "192.168.1.105",
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/120.0.0.0",
+    deviceType: "desktop",
+    browser: "Edge 120",
+    os: "Windows 10",
+    location: "Mumbai Office - Floor 2",
+    sessionId: "sess-20240115-045",
+    requestMethod: "PATCH",
+    apiEndpoint: "/api/assets/asset-001",
+    severity: "high",
+    notes: "Asset allocation for new finance team member",
+    tags: ["allocation", "finance-dept", "new-employee"]
   },
   {
     id: "3",
     timestamp: "2024-01-16 09:15:33",
-    user: "HR Admin",
+    date: "2024-01-16",
+    time: "09:15:33",
+    user: "Priya Patel",
+    userId: "usr-003",
     userRole: "admin",
+    userDepartment: "Human Resources",
     action: "INSERT",
     table: "employees",
+    tableLabel: "Employees",
     recordId: "emp-001",
-    recordName: "Jane Smith",
+    recordName: "Amit Sharma",
+    recordCode: "EMP-1023",
+    description: "Created new employee record",
     changes: [],
-    ipAddress: "192.168.1.110"
+    ipAddress: "192.168.1.110",
+    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/119.0.0.0",
+    deviceType: "desktop",
+    browser: "Chrome 119",
+    os: "macOS Sonoma",
+    location: "Mumbai Office - HR Department",
+    sessionId: "sess-20240116-012",
+    requestMethod: "POST",
+    apiEndpoint: "/api/employees",
+    severity: "medium",
+    notes: "New joinee - Finance Department",
+    tags: ["new-employee", "finance", "onboarding"]
+  },
+  {
+    id: "4",
+    timestamp: "2024-01-16 11:45:22",
+    date: "2024-01-16",
+    time: "11:45:22",
+    user: "Vikram Mehta",
+    userId: "usr-004",
+    userRole: "manager",
+    userDepartment: "Operations",
+    action: "UPDATE",
+    table: "licenses",
+    tableLabel: "Licenses",
+    recordId: "lic-001",
+    recordName: "Microsoft Office 365 Business",
+    recordCode: "MS-O365-001",
+    description: "Renewed license and extended expiry date",
+    changes: [
+      { field: "expiry_date", fieldLabel: "Expiry Date", oldValue: "2024-01-31", newValue: "2025-01-31", dataType: "date" },
+      { field: "status", fieldLabel: "Status", oldValue: "expiring_soon", newValue: "active", dataType: "enum" },
+      { field: "renewal_cost", fieldLabel: "Renewal Cost", oldValue: "₹0", newValue: "₹12,000", dataType: "currency" }
+    ],
+    ipAddress: "192.168.1.115",
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1_1) Version/17.1.1 Mobile/15E148 Safari/604.1",
+    deviceType: "mobile",
+    browser: "Safari Mobile",
+    os: "iOS 17.1",
+    location: "Remote - Mobile Access",
+    sessionId: "sess-20240116-089",
+    requestMethod: "PATCH",
+    apiEndpoint: "/api/licenses/lic-001",
+    severity: "high",
+    notes: "Annual license renewal processed",
+    tags: ["license-renewal", "microsoft", "expense-approved"]
+  },
+  {
+    id: "5",
+    timestamp: "2024-01-17 16:30:00",
+    date: "2024-01-17",
+    time: "16:30:00",
+    user: "Sunny Sobhani",
+    userId: "usr-001",
+    userRole: "admin",
+    userDepartment: "IT Administration",
+    action: "DELETE",
+    table: "vendors",
+    tableLabel: "Vendors",
+    recordId: "ven-005",
+    recordName: "ABC Electronics (Duplicate Entry)",
+    recordCode: "VEN-005",
+    description: "Removed duplicate vendor record",
+    changes: [
+      { field: "is_deleted", fieldLabel: "Deleted", oldValue: "false", newValue: "true", dataType: "boolean" }
+    ],
+    ipAddress: "192.168.1.100",
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+    deviceType: "desktop",
+    browser: "Chrome 120",
+    os: "Windows 11",
+    location: "Mumbai Office - Floor 3",
+    sessionId: "sess-20240117-156",
+    requestMethod: "DELETE",
+    apiEndpoint: "/api/vendors/ven-005",
+    severity: "low",
+    notes: "Duplicate of VEN-003 - Tech Solutions Pvt Ltd",
+    tags: ["cleanup", "duplicate-removal", "data-quality"]
   }
 ];
 
@@ -95,20 +251,172 @@ export default function AuditTrailPage() {
   const [search, setSearch] = useState("");
   const [tableFilter, setTableFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
+  const [userFilter, setUserFilter] = useState("all");
+  const [severityFilter, setSeverityFilter] = useState("all");
+  const [deviceFilter, setDeviceFilter] = useState("all");
   const [selectedEntry, setSelectedEntry] = useState<AuditEntry | null>(null);
-  const [dateRange, setDateRange] = useState("7");
+  const [dateRange, setDateRange] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const filteredData = mockAuditData.filter((entry) => {
-    const matchesSearch = 
-      entry.recordName.toLowerCase().includes(search.toLowerCase()) ||
-      entry.user.toLowerCase().includes(search.toLowerCase()) ||
-      entry.table.toLowerCase().includes(search.toLowerCase());
+  // Get unique users for filter
+  const uniqueUsers = useMemo(() => {
+    const users = new Map();
+    mockAuditData.forEach(entry => {
+      users.set(entry.userId, { id: entry.userId, name: entry.user, role: entry.userRole });
+    });
+    return Array.from(users.values());
+  }, []);
+
+  // Get all unique tags
+  const allTags = useMemo(() => {
+    const tags = new Set<string>();
+    mockAuditData.forEach(entry => entry.tags.forEach(tag => tags.add(tag)));
+    return Array.from(tags);
+  }, []);
+
+  // Filter data with all criteria
+  const filteredData = useMemo(() => {
+    return mockAuditData.filter((entry) => {
+      // Search across multiple fields
+      const matchesSearch = !search || 
+        entry.recordName.toLowerCase().includes(search.toLowerCase()) ||
+        entry.recordCode.toLowerCase().includes(search.toLowerCase()) ||
+        entry.user.toLowerCase().includes(search.toLowerCase()) ||
+        entry.userDepartment.toLowerCase().includes(search.toLowerCase()) ||
+        entry.tableLabel.toLowerCase().includes(search.toLowerCase()) ||
+        entry.description.toLowerCase().includes(search.toLowerCase()) ||
+        entry.ipAddress.includes(search) ||
+        entry.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()));
+      
+      const matchesTable = tableFilter === "all" || entry.table === tableFilter;
+      const matchesAction = actionFilter === "all" || entry.action === actionFilter;
+      const matchesUser = userFilter === "all" || entry.userId === userFilter;
+      const matchesSeverity = severityFilter === "all" || entry.severity === severityFilter;
+      const matchesDevice = deviceFilter === "all" || entry.deviceType === deviceFilter;
+      
+      // Date range filter
+      let matchesDate = true;
+      if (dateRange === "custom" && startDate && endDate) {
+        matchesDate = entry.date >= startDate && entry.date <= endDate;
+      }
+      
+      // Tags filter
+      const matchesTags = selectedTags.length === 0 || 
+        selectedTags.some(tag => entry.tags.includes(tag));
+      
+      return matchesSearch && matchesTable && matchesAction && matchesUser && 
+             matchesSeverity && matchesDevice && matchesDate && matchesTags;
+    });
+  }, [search, tableFilter, actionFilter, userFilter, severityFilter, deviceFilter, dateRange, startDate, endDate, selectedTags]);
+
+  // Export functions
+  const exportToCSV = () => {
+    const headers = [
+      "ID", "Timestamp", "Date", "Time", "User", "User Role", "Department",
+      "Action", "Table", "Record Name", "Record Code", "Description",
+      "IP Address", "Device Type", "Browser", "OS", "Location",
+      "Severity", "Changes", "Tags", "Notes"
+    ];
     
-    const matchesTable = tableFilter === "all" || entry.table === tableFilter;
-    const matchesAction = actionFilter === "all" || entry.action === actionFilter;
+    const rows = filteredData.map(entry => [
+      entry.id,
+      entry.timestamp,
+      entry.date,
+      entry.time,
+      entry.user,
+      entry.userRole,
+      entry.userDepartment,
+      entry.action,
+      entry.tableLabel,
+      entry.recordName,
+      entry.recordCode,
+      entry.description,
+      entry.ipAddress,
+      entry.deviceType,
+      entry.browser,
+      entry.os,
+      entry.location,
+      entry.severity,
+      entry.changes.map(c => `${c.fieldLabel}: ${c.oldValue} → ${c.newValue}`).join("; "),
+      entry.tags.join(", "),
+      entry.notes
+    ]);
     
-    return matchesSearch && matchesTable && matchesAction;
-  });
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `audit_trail_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
+  const exportToJSON = () => {
+    const jsonContent = JSON.stringify(filteredData, null, 2);
+    const blob = new Blob([jsonContent], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `audit_trail_${new Date().toISOString().split("T")[0]}.json`;
+    link.click();
+  };
+
+  const printAuditLog = () => {
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head><title>Audit Trail Report</title></head>
+          <body>
+            <h1>Audit Trail Report - ${new Date().toLocaleDateString()}</h1>
+            <table border="1" cellpadding="5" cellspacing="0">
+              <tr>
+                <th>Timestamp</th><th>User</th><th>Action</th><th>Table</th>
+                <th>Record</th><th>Changes</th><th>IP Address</th>
+              </tr>
+              ${filteredData.map(entry => `
+                <tr>
+                  <td>${entry.timestamp}</td>
+                  <td>${entry.user}</td>
+                  <td>${entry.action}</td>
+                  <td>${entry.tableLabel}</td>
+                  <td>${entry.recordName}</td>
+                  <td>${entry.changes.map(c => `${c.fieldLabel}: ${c.oldValue} → ${c.newValue}`).join("<br>")}</td>
+                  <td>${entry.ipAddress}</td>
+                </tr>
+              `).join("")}
+            </table>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setTableFilter("all");
+    setActionFilter("all");
+    setUserFilter("all");
+    setSeverityFilter("all");
+    setDeviceFilter("all");
+    setDateRange("all");
+    setStartDate("");
+    setEndDate("");
+    setSelectedTags([]);
+  };
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -157,14 +465,48 @@ export default function AuditTrailPage() {
         return <Package className="h-4 w-4 text-accent" />;
       case 'employees':
         return <User className="h-4 w-4 text-accent" />;
+      case 'locations':
+        return <MapPin className="h-4 w-4 text-accent" />;
+      case 'licenses':
+        return <Key className="h-4 w-4 text-accent" />;
+      case 'vendors':
+        return <Building2 className="h-4 w-4 text-accent" />;
+      case 'companies':
+        return <Globe className="h-4 w-4 text-accent" />;
       default:
         return <History className="h-4 w-4 text-accent" />;
     }
   };
 
+  const getSeverityBadge = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return <Badge className="bg-red-600 text-white hover:bg-red-700">Critical</Badge>;
+      case 'high':
+        return <Badge className="bg-orange-500 text-white hover:bg-orange-600">High</Badge>;
+      case 'medium':
+        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Medium</Badge>;
+      case 'low':
+        return <Badge className="bg-green-500 text-white hover:bg-green-600">Low</Badge>;
+      default:
+        return <Badge variant="secondary">{severity}</Badge>;
+    }
+  };
+
+  const getDeviceIcon = (deviceType: string) => {
+    switch (deviceType) {
+      case 'mobile':
+        return <Smartphone className="h-4 w-4" />;
+      case 'tablet':
+        return <Monitor className="h-4 w-4" />;
+      default:
+        return <Monitor className="h-4 w-4" />;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Export Dropdown */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -172,72 +514,218 @@ export default function AuditTrailPage() {
             Audit Trail
           </h1>
           <p className="text-muted-foreground text-sm">
-            Complete history of all changes in the system
+            Complete history of all changes with detailed tracking
           </p>
         </div>
-        <Button variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Export Log
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
+            <Filter className="h-4 w-4 mr-2" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+          <Select>
+            <SelectTrigger className="w-[140px]">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv" onClick={exportToCSV}>
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Export as CSV
+                </div>
+              </SelectItem>
+              <SelectItem value="json" onClick={exportToJSON}>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  Export as JSON
+                </div>
+              </SelectItem>
+              <SelectItem value="print" onClick={printAuditLog}>
+                <div className="flex items-center gap-2">
+                  <Printer className="h-4 w-4 text-purple-600" />
+                  Print Report
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card className="bg-muted/30 border-0">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3 items-center">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search records, users, or tables..." 
-                value={search} 
-                onChange={e => setSearch(e.target.value)} 
-                className="pl-9 bg-white" 
-              />
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input 
+          placeholder="Search by record name, user, department, IP address, or tags..." 
+          value={search} 
+          onChange={e => setSearch(e.target.value)} 
+          className="pl-9" 
+        />
+      </div>
+
+      {/* Comprehensive Filters */}
+      {showFilters && (
+        <Card className="bg-muted/30 border-0">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                Advanced Filters
+              </h3>
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" />
+                Clear All
+              </Button>
             </div>
             
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={tableFilter} onValueChange={setTableFilter}>
-                <SelectTrigger className="w-[140px] bg-white">
-                  <SelectValue placeholder="Table" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tables</SelectItem>
-                  <SelectItem value="assets">Assets</SelectItem>
-                  <SelectItem value="employees">Employees</SelectItem>
-                  <SelectItem value="locations">Locations</SelectItem>
-                  <SelectItem value="licenses">Licenses</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {/* Table Filter */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Table</label>
+                <Select value={tableFilter} onValueChange={setTableFilter}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All Tables" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tables</SelectItem>
+                    <SelectItem value="assets">Assets</SelectItem>
+                    <SelectItem value="employees">Employees</SelectItem>
+                    <SelectItem value="locations">Locations</SelectItem>
+                    <SelectItem value="licenses">Licenses</SelectItem>
+                    <SelectItem value="vendors">Vendors</SelectItem>
+                    <SelectItem value="companies">Companies</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Action Filter */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Action</label>
+                <Select value={actionFilter} onValueChange={setActionFilter}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All Actions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Actions</SelectItem>
+                    <SelectItem value="INSERT">Created</SelectItem>
+                    <SelectItem value="UPDATE">Updated</SelectItem>
+                    <SelectItem value="DELETE">Deleted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* User Filter */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">User</label>
+                <Select value={userFilter} onValueChange={setUserFilter}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All Users" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    {uniqueUsers.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name} ({user.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Severity Filter */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Severity</label>
+                <Select value={severityFilter} onValueChange={setSeverityFilter}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All Severities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Severities</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Device Filter */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Device</label>
+                <Select value={deviceFilter} onValueChange={setDeviceFilter}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All Devices" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Devices</SelectItem>
+                    <SelectItem value="desktop">Desktop</SelectItem>
+                    <SelectItem value="mobile">Mobile</SelectItem>
+                    <SelectItem value="tablet">Tablet</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Range */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Date Range</label>
+                <Select value={dateRange} onValueChange={setDateRange}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="All Time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Last 24 hours</SelectItem>
+                    <SelectItem value="7">Last 7 days</SelectItem>
+                    <SelectItem value="30">Last 30 days</SelectItem>
+                    <SelectItem value="90">Last 3 months</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                    <SelectItem value="all">All time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <Select value={actionFilter} onValueChange={setActionFilter}>
-              <SelectTrigger className="w-[140px] bg-white">
-                <SelectValue placeholder="Action" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Actions</SelectItem>
-                <SelectItem value="INSERT">Created</SelectItem>
-                <SelectItem value="UPDATE">Updated</SelectItem>
-                <SelectItem value="DELETE">Deleted</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Custom Date Range */}
+            {dateRange === "custom" && (
+              <div className="flex gap-3 mt-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">From</label>
+                  <Input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)} 
+                    className="bg-white"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">To</label>
+                  <Input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)} 
+                    className="bg-white"
+                  />
+                </div>
+              </div>
+            )}
 
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[140px] bg-white">
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Last 24 hours</SelectItem>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 3 months</SelectItem>
-                <SelectItem value="all">All time</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+            {/* Tags Filter */}
+            <div className="mt-4">
+              <label className="text-xs text-muted-foreground mb-2 block">Tags</label>
+              <div className="flex flex-wrap gap-2">
+                {allTags.map(tag => (
+                  <Badge 
+                    key={tag}
+                    variant={selectedTags.includes(tag) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => toggleTag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Statistics */}
       <div className="grid grid-cols-4 gap-4">
@@ -356,62 +844,195 @@ export default function AuditTrailPage() {
         </CardContent>
       </Card>
 
-      {/* Entry Detail Dialog */}
+      {/* Entry Detail Dialog - Comprehensive */}
       <Dialog open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedEntry && getActionIcon(selectedEntry.action)}
               Audit Entry Details
+              {selectedEntry && getSeverityBadge(selectedEntry.severity)}
             </DialogTitle>
           </DialogHeader>
           {selectedEntry && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase">Timestamp</p>
-                  <p className="font-medium">{selectedEntry.timestamp}</p>
+            <div className="space-y-6 py-4">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-muted-foreground text-xs uppercase mb-1">Timestamp</p>
+                  <p className="font-medium">{selectedEntry.date}</p>
+                  <p className="text-xs text-muted-foreground">{selectedEntry.time}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase">User</p>
-                  <p className="font-medium">{selectedEntry.user} ({selectedEntry.userRole})</p>
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-muted-foreground text-xs uppercase mb-1">Action</p>
+                  {getActionBadge(selectedEntry.action)}
                 </div>
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase">Action</p>
-                  <p className="font-medium">{selectedEntry.action}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase">Table</p>
-                  <p className="font-medium capitalize">{selectedEntry.table}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-muted-foreground text-xs uppercase">Record</p>
-                  <p className="font-medium">{selectedEntry.recordName}</p>
-                  <p className="text-xs text-muted-foreground font-mono">{selectedEntry.recordId}</p>
-                </div>
-                {selectedEntry.ipAddress && (
-                  <div>
-                    <p className="text-muted-foreground text-xs uppercase">IP Address</p>
-                    <p className="font-mono text-xs">{selectedEntry.ipAddress}</p>
+                <div className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-muted-foreground text-xs uppercase mb-1">Table</p>
+                  <div className="flex items-center gap-2">
+                    {getTableIcon(selectedEntry.table)}
+                    <span className="font-medium">{selectedEntry.tableLabel}</span>
                   </div>
-                )}
+                </div>
               </div>
 
+              {/* Record Info */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-accent" />
+                  Record Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">Record Name</p>
+                    <p className="font-medium">{selectedEntry.recordName}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Record Code</p>
+                    <p className="font-mono text-xs">{selectedEntry.recordCode}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground text-xs">Description</p>
+                    <p className="text-sm">{selectedEntry.description}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Record ID</p>
+                    <p className="font-mono text-xs text-muted-foreground">{selectedEntry.recordId}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Info */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <User className="h-4 w-4 text-accent" />
+                  User Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">User Name</p>
+                    <p className="font-medium">{selectedEntry.user}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">User ID</p>
+                    <p className="font-mono text-xs text-muted-foreground">{selectedEntry.userId}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Role</p>
+                    <p className="font-medium capitalize">{selectedEntry.userRole}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Department</p>
+                    <p className="font-medium">{selectedEntry.userDepartment}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Details */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Monitor className="h-4 w-4 text-accent" />
+                  Technical Details
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">IP Address</p>
+                    <p className="font-mono text-xs">{selectedEntry.ipAddress}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Device Type</p>
+                    <div className="flex items-center gap-2">
+                      {getDeviceIcon(selectedEntry.deviceType)}
+                      <span className="capitalize">{selectedEntry.deviceType}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Browser</p>
+                    <p className="font-medium">{selectedEntry.browser}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Operating System</p>
+                    <p className="font-medium">{selectedEntry.os}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Location</p>
+                    <p className="font-medium">{selectedEntry.location}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Session ID</p>
+                    <p className="font-mono text-xs text-muted-foreground">{selectedEntry.sessionId}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* API Details */}
+              <div className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-accent" />
+                  API Details
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">Request Method</p>
+                    <Badge variant="outline" className="font-mono">{selectedEntry.requestMethod}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">API Endpoint</p>
+                    <p className="font-mono text-xs">{selectedEntry.apiEndpoint}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground text-xs">User Agent</p>
+                    <p className="text-xs text-muted-foreground break-all">{selectedEntry.userAgent}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Changes */}
               {selectedEntry.changes.length > 0 && (
-                <div>
-                  <p className="text-muted-foreground text-xs uppercase mb-2">Changes</p>
-                  <div className="space-y-2">
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-semibold mb-3">Field Changes</h4>
+                  <div className="space-y-3">
                     {selectedEntry.changes.map((change, idx) => (
-                      <div key={idx} className="bg-muted/50 rounded-lg p-3 text-sm">
-                        <p className="font-medium capitalize mb-1">{change.field}</p>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="line-through text-muted-foreground">{change.oldValue || '—'}</span>
-                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-accent font-medium">{change.newValue || '—'}</span>
+                      <div key={idx} className="bg-muted/30 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-medium text-sm">{change.fieldLabel}</p>
+                          <Badge variant="outline" className="text-xs">{change.dataType}</Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="flex-1 bg-red-50 rounded p-2">
+                            <p className="text-xs text-red-600 mb-1">Old Value</p>
+                            <p className="text-red-700 line-through">{change.oldValue || '—'}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex-1 bg-green-50 rounded p-2">
+                            <p className="text-xs text-green-600 mb-1">New Value</p>
+                            <p className="text-green-700 font-medium">{change.newValue || '—'}</p>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              <div>
+                <h4 className="font-semibold mb-2 text-sm">Tags</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedEntry.tags.map(tag => (
+                    <Badge key={tag} variant="secondary">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Notes */}
+              {selectedEntry.notes && (
+                <div className="border rounded-lg p-4 bg-yellow-50/50">
+                  <h4 className="font-semibold mb-2 text-sm flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-accent" />
+                    Notes
+                  </h4>
+                  <p className="text-sm">{selectedEntry.notes}</p>
                 </div>
               )}
             </div>
