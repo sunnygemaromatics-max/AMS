@@ -21,12 +21,57 @@ const COLORS = [
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useDashboardStats();
-  const { data: assets } = useAssets();
-  const { data: licenses } = useLicenses();
+  const { data: stats, isLoading, error: statsError } = useDashboardStats();
+  const { data: assets, error: assetsError } = useAssets();
+  const { data: licenses, error: licensesError } = useLicenses();
   const navigate = useNavigate();
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+
+  // Surface query failures so we don't render an empty dashboard silently
+  const queryError = statsError || assetsError || licensesError;
+  if (queryError) {
+    return (
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" /> Could not load dashboard data
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Supabase rejected one of the queries. Most common cause: your account is not approved yet,
+            or the database is empty. Run <code className="px-1.5 py-0.5 rounded bg-muted text-xs">DEBUG_AND_FIX.sql</code> in
+            the Supabase SQL Editor.
+          </p>
+          <pre className="text-xs bg-background p-3 rounded border overflow-x-auto">
+{JSON.stringify({
+  stats:    statsError    ? (statsError    as Error).message : "ok",
+  assets:   assetsError   ? (assetsError   as Error).message : "ok",
+  licenses: licensesError ? (licensesError as Error).message : "ok",
+}, null, 2)}
+          </pre>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // No data at all? Help the user understand why.
+  if ((assets ?? []).length === 0 && stats?.totalAssets === 0) {
+    return (
+      <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-900/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="h-5 w-5" /> No data found
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm space-y-2 text-muted-foreground">
+          <p>The queries succeeded, but every table is empty.</p>
+          <p>Run <code className="px-1.5 py-0.5 rounded bg-muted text-xs">DEBUG_AND_FIX.sql</code> in the Supabase SQL Editor — it will insert a few sample rows so you can see the UI in action.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const totalValue = stats?.totalValue || 0;
   const allocated = stats?.allocated || 0;
