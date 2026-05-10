@@ -3,6 +3,20 @@
 -- Run this to check everything - database, data, and issues
 -- ============================================================
 
+-- STEP 0: Create bin_cards table if it doesn't exist (needed for queries)
+CREATE TABLE IF NOT EXISTS public.bin_cards (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    asset_id UUID REFERENCES public.assets(id) ON DELETE CASCADE,
+    transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    transaction_type TEXT CHECK (transaction_type IN ('receipt', 'issue', 'adjustment')),
+    quantity INTEGER DEFAULT 1,
+    balance_quantity INTEGER DEFAULT 0,
+    reference_no TEXT,
+    notes TEXT,
+    created_by UUID REFERENCES auth.users(id),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- Check 1: Database Tables Exist
 SELECT '========================================' as section;
 SELECT '1. CHECKING TABLES' as status;
@@ -48,12 +62,7 @@ SELECT 'departments', COUNT(*) FROM public.departments
 UNION ALL
 SELECT 'licenses', COUNT(*) FROM public.licenses
 UNION ALL
-SELECT 'bin_cards', 
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bin_cards' AND table_schema = 'public')
-    THEN (SELECT COUNT(*) FROM public.bin_cards)
-    ELSE 0
-  END;
+SELECT 'bin_cards', COUNT(*) FROM public.bin_cards;
 
 -- Check 4: Assets with Missing Bin Card Numbers
 SELECT '========================================' as section;
@@ -152,25 +161,12 @@ SELECT
 FROM public.assets a
 WHERE a.category_id IS NULL;
 
--- Check 9: Create Missing Bin Cards Table if not exists
+-- Check 9: Ensure Bin Cards Table has RLS and Policies
 SELECT '========================================' as section;
-SELECT '9. ENSURING BIN_CARDS TABLE EXISTS' as status;
+SELECT '9. ENSURING BIN_CARDS RLS AND POLICIES' as status;
 SELECT '========================================' as section;
 
-CREATE TABLE IF NOT EXISTS public.bin_cards (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    asset_id UUID REFERENCES public.assets(id) ON DELETE CASCADE,
-    transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    transaction_type TEXT CHECK (transaction_type IN ('receipt', 'issue', 'adjustment')),
-    quantity INTEGER DEFAULT 1,
-    balance_quantity INTEGER DEFAULT 0,
-    reference_no TEXT,
-    notes TEXT,
-    created_by UUID REFERENCES auth.users(id),
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Enable RLS on bin_cards
+-- Enable RLS on bin_cards (table already created at top)
 ALTER TABLE public.bin_cards ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for bin_cards (handle if already exists)
