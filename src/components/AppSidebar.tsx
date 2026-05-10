@@ -13,6 +13,7 @@ import {
   Briefcase,
   Activity,
   BarChart3,
+  QrCode,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -47,6 +48,7 @@ const dataNav = [
   { title: "Import History", url: "/import/history", icon: History },
   { title: "Activity Timeline", url: "/activity", icon: Activity },
   { title: "Audit Trail", url: "/audit-trail", icon: History },
+  { title: "QR Codes", url: "/qr-codes", icon: QrCode },
 ];
 
 const systemNav = [

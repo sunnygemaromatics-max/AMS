@@ -31,6 +31,7 @@ const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const AuditTrailPage = lazy(() => import("./pages/AuditTrailPage"));
+const QRCodeGenerationPage = lazy(() => import("./pages/QRCodeGenerationPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ const App = () => (
                           <Route path="/activity" element={<ActivityPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/audit-trail" element={<AuditTrailPage />} />
+                          <Route path="/qr-codes" element={<QRCodeGenerationPage />} />
                           <Route path="/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
                           <Route path="/companies" element={<SettingsPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
