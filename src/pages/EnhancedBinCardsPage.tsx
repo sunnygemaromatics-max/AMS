@@ -61,12 +61,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -108,7 +102,7 @@ export default function EnhancedBinCardsPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [showAddEntry, setShowAddEntry] = useState(false);
-  const [showEntryDetail, setShowEntryDetail] = useState<BinCardEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<BinCardEntry | null>(null);
   const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
@@ -471,17 +465,6 @@ export default function EnhancedBinCardsPage() {
     setDateRange("all");
     setStartDate("");
     setEndDate("");
-  };
-
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'receipt': return <ArrowDownLeft className="h-4 w-4 text-green-600" />;
-      case 'issue': return <ArrowUpRight className="h-4 w-4 text-blue-600" />;
-      case 'return': return <ArrowDownLeft className="h-4 w-4 text-orange-600" />;
-      case 'transfer': return <Package className="h-4 w-4 text-purple-600" />;
-      case 'disposal': return <X className="h-4 w-4 text-red-600" />;
-      default: return <Package className="h-4 w-4" />;
-    }
   };
 
   const getTypeBadge = (type: string) => {
@@ -888,7 +871,7 @@ export default function EnhancedBinCardsPage() {
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => setShowEntryDetail(entry)}
+                                onClick={() => setSelectedEntry(entry)}
                               >
                                 <Eye className="h-3 w-3" />
                               </Button>
@@ -954,30 +937,30 @@ export default function EnhancedBinCardsPage() {
       </div>
 
       {/* Entry Detail Dialog - Comprehensive */}
-      <Dialog open={!!showEntryDetail} onOpenChange={() => setShowEntryDetail(null)}>
+      <Dialog open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {showEntryDetail && getTypeIcon(showEntryDetail.type)}
+              <Package className="h-5 w-5 text-accent" />
               Bin Card Entry Details
             </DialogTitle>
           </DialogHeader>
-          {showEntryDetail && (
+          {selectedEntry && (
             <div className="space-y-6 py-4">
               {/* Basic Info */}
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div className="bg-muted/30 rounded-lg p-3">
                   <p className="text-muted-foreground text-xs uppercase mb-1">Entry Number</p>
-                  <p className="font-mono font-bold text-lg">#{showEntryDetail.entryNo}</p>
+                  <p className="font-mono font-bold text-lg">#{selectedEntry.entryNo}</p>
                 </div>
                 <div className="bg-muted/30 rounded-lg p-3">
                   <p className="text-muted-foreground text-xs uppercase mb-1">Date & Time</p>
-                  <p className="font-medium">{showEntryDetail.date}</p>
-                  <p className="text-xs text-muted-foreground">{showEntryDetail.time}</p>
+                  <p className="font-medium">{selectedEntry.date}</p>
+                  <p className="text-xs text-muted-foreground">{selectedEntry.time}</p>
                 </div>
                 <div className="bg-muted/30 rounded-lg p-3">
                   <p className="text-muted-foreground text-xs uppercase mb-1">Transaction Type</p>
-                  {getTypeBadge(showEntryDetail.type)}
+                  {getTypeBadge(selectedEntry.type)}
                 </div>
               </div>
 
@@ -990,19 +973,19 @@ export default function EnhancedBinCardsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div className="text-center p-3 bg-green-50 rounded-lg">
                     <p className="text-xs text-green-600 uppercase">Receipt Qty</p>
-                    <p className="text-xl font-bold text-green-700">{showEntryDetail.receiptQty || 0}</p>
+                    <p className="text-xl font-bold text-green-700">{selectedEntry.receiptQty || 0}</p>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg">
                     <p className="text-xs text-blue-600 uppercase">Issue Qty</p>
-                    <p className="text-xl font-bold text-blue-700">{showEntryDetail.issueQty || 0}</p>
+                    <p className="text-xl font-bold text-blue-700">{selectedEntry.issueQty || 0}</p>
                   </div>
                   <div className="text-center p-3 bg-accent/10 rounded-lg">
                     <p className="text-xs text-accent uppercase">Balance Qty</p>
-                    <p className="text-xl font-bold text-accent">{showEntryDetail.balanceQty}</p>
+                    <p className="text-xl font-bold text-accent">{selectedEntry.balanceQty}</p>
                   </div>
                   <div className="text-center p-3 bg-yellow-50 rounded-lg">
                     <p className="text-xs text-yellow-600 uppercase">Total Value</p>
-                    <p className="text-xl font-bold text-yellow-700">₹{showEntryDetail.totalValue.toLocaleString()}</p>
+                    <p className="text-xl font-bold text-yellow-700">₹{selectedEntry.totalValue.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -1016,23 +999,23 @@ export default function EnhancedBinCardsPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Reference Type</p>
-                    <p className="font-medium">{showEntryDetail.referenceType}</p>
+                    <p className="font-medium">{selectedEntry.referenceType}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Reference Number</p>
-                    <p className="font-mono text-xs">{showEntryDetail.reference}</p>
+                    <p className="font-mono text-xs">{selectedEntry.reference}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Document Number</p>
-                    <p className="font-mono text-xs">{showEntryDetail.documentNo}</p>
+                    <p className="font-mono text-xs">{selectedEntry.documentNo}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">GRN Number</p>
-                    <p className="font-mono text-xs">{showEntryDetail.grnNo || '—'}</p>
+                    <p className="font-mono text-xs">{selectedEntry.grnNo || '—'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">PO Number</p>
-                    <p className="font-mono text-xs">{showEntryDetail.poNo || '—'}</p>
+                    <p className="font-mono text-xs">{selectedEntry.poNo || '—'}</p>
                   </div>
                 </div>
               </div>
@@ -1046,20 +1029,20 @@ export default function EnhancedBinCardsPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Created By</p>
-                    <p className="font-medium">{showEntryDetail.user}</p>
-                    <p className="text-xs text-muted-foreground">ID: {showEntryDetail.userId}</p>
+                    <p className="font-medium">{selectedEntry.user}</p>
+                    <p className="text-xs text-muted-foreground">ID: {selectedEntry.userId}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Department</p>
-                    <p className="font-medium">{showEntryDetail.department}</p>
+                    <p className="font-medium">{selectedEntry.department}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Approved By</p>
-                    <p className="font-medium">{showEntryDetail.approvedBy}</p>
+                    <p className="font-medium">{selectedEntry.approvedBy}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Approval Date</p>
-                    <p className="font-medium">{showEntryDetail.approvalDate}</p>
+                    <p className="font-medium">{selectedEntry.approvalDate}</p>
                   </div>
                 </div>
               </div>
@@ -1073,19 +1056,19 @@ export default function EnhancedBinCardsPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Vendor Name</p>
-                    <p className="font-medium">{showEntryDetail.vendorName || '—'}</p>
+                    <p className="font-medium">{selectedEntry.vendorName || '—'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Location</p>
-                    <p className="font-medium">{showEntryDetail.location}</p>
+                    <p className="font-medium">{selectedEntry.location}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Employee Code</p>
-                    <p className="font-mono text-xs">{showEntryDetail.employeeCode || '—'}</p>
+                    <p className="font-mono text-xs">{selectedEntry.employeeCode || '—'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Employee Name</p>
-                    <p className="font-medium">{showEntryDetail.employeeName || '—'}</p>
+                    <p className="font-medium">{selectedEntry.employeeName || '—'}</p>
                   </div>
                 </div>
               </div>
@@ -1099,11 +1082,11 @@ export default function EnhancedBinCardsPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Asset Condition</p>
-                    {getConditionBadge(showEntryDetail.condition)}
+                    {getConditionBadge(selectedEntry.condition)}
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Warranty Information</p>
-                    <p className="font-medium">{showEntryDetail.warrantyInfo}</p>
+                    <p className="font-medium">{selectedEntry.warrantyInfo}</p>
                   </div>
                 </div>
               </div>
@@ -1114,7 +1097,7 @@ export default function EnhancedBinCardsPage() {
                   <FileText className="h-4 w-4 text-accent" />
                   Remarks
                 </h4>
-                <p className="text-sm">{showEntryDetail.remarks}</p>
+                <p className="text-sm">{selectedEntry.remarks}</p>
               </div>
 
               {/* Tags */}
@@ -1124,21 +1107,21 @@ export default function EnhancedBinCardsPage() {
                   Tags
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {showEntryDetail.tags.map(tag => (
+                  {selectedEntry.tags.map(tag => (
                     <Badge key={tag} variant="secondary">{tag}</Badge>
                   ))}
                 </div>
               </div>
 
               {/* Attachments */}
-              {showEntryDetail.attachments.length > 0 && (
+              {selectedEntry.attachments.length > 0 && (
                 <div className="border rounded-lg p-4">
                   <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
                     <FileText className="h-4 w-4 text-accent" />
-                    Attachments ({showEntryDetail.attachments.length})
+                    Attachments ({selectedEntry.attachments.length})
                   </h4>
                   <div className="space-y-2">
-                    {showEntryDetail.attachments.map((file, idx) => (
+                    {selectedEntry.attachments.map((file, idx) => (
                       <div key={idx} className="flex items-center gap-2 p-2 bg-muted/30 rounded">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">{file}</span>
