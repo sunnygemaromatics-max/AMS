@@ -496,6 +496,132 @@ export function useDeleteLicense() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// BIN CARD ENTRIES (created by SETUP_BIN_CARDS_SAFE.sql)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface BinCardEntryRow {
+  id: string;
+  asset_id: string;
+  entry_date: string;
+  transaction_type: 'receipt' | 'issue' | 'adjustment' | 'opening';
+  reference_no: string | null;
+  receipt_qty: number;
+  issue_qty: number;
+  balance_qty: number;
+  unit_cost: number | null;
+  total_value: number | null;
+  created_by_id: string | null;
+  created_by_name: string | null;
+  remarks: string | null;
+  created_at: string;
+}
+
+export function useBinCardEntries(assetId?: string) {
+  return useQuery({
+    queryKey: ["bin_card_entries", assetId ?? "all"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase as any)
+        .from("bin_card_entries")
+        .select("*")
+        .order("entry_date", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (assetId) q = q.eq("asset_id", assetId);
+      const { data, error } = await q.limit(500);
+      if (error) throw error;
+      return (data ?? []) as BinCardEntryRow[];
+    },
+    enabled: assetId === undefined ? true : !!assetId,
+  });
+}
+
+export function useCreateBinCardEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (entry: {
+      asset_id: string;
+      entry_date?: string;
+      transaction_type: 'receipt' | 'issue' | 'adjustment' | 'opening';
+      reference_no?: string | null;
+      receipt_qty?: number;
+      issue_qty?: number;
+      balance_qty: number;
+      unit_cost?: number | null;
+      total_value?: number | null;
+      created_by_id?: string | null;
+      created_by_name?: string | null;
+      remarks?: string | null;
+    }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from("bin_card_entries").insert(entry);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(qc, "bin_card_entries"),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUDIT LOG V2 (table created by SETUP_BIN_CARDS_SAFE.sql)
+// Different shape from the legacy AuditEntry (this one is flat: table_name,
+// record_id, action, old_values, new_values, user_id, user_name).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface AuditLogV2Row {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  changed_fields: string[] | null;
+  user_id: string | null;
+  user_name: string | null;
+  user_role: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  location_id: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface AuditLogV2Filters {
+  table?: string;        // table_name
+  action?: 'INSERT' | 'UPDATE' | 'DELETE';
+  user?: string;         // matches user_name OR user_id substring
+  search?: string;       // free text
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export function useAuditLogV2(filters: AuditLogV2Filters = {}) {
+  return useQuery({
+    queryKey: ["audit_log_v2", filters],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let q = (supabase as any)
+        .from("audit_log")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (filters.table  && filters.table  !== "all") q = q.eq("table_name", filters.table);
+      if (filters.action && filters.action !== ("all" as never)) q = q.eq("action", filters.action);
+      if (filters.user   && filters.user   !== "all") q = q.ilike("user_name", `%${filters.user}%`);
+      if (filters.from)  q = q.gte("created_at", filters.from);
+      if (filters.to)    q = q.lte("created_at", filters.to + "T23:59:59Z");
+      if (filters.search) q = q.or(
+        `user_name.ilike.%${filters.search}%,table_name.ilike.%${filters.search}%,notes.ilike.%${filters.search}%`
+      );
+
+      const { data, error } = await q.limit(filters.limit ?? 500);
+      if (error) throw error;
+      return (data ?? []) as AuditLogV2Row[];
+    },
+    staleTime: 10_000,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ASSET TRANSACTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 

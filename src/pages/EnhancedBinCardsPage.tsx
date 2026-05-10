@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useAssets, useAssetTransactions } from "@/hooks/useSupabaseData";
+import { useAssets, useAssetTransactions, useBinCardEntries, BinCardEntryRow } from "@/hooks/useSupabaseData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -114,6 +114,8 @@ export default function EnhancedBinCardsPage() {
   const [endDate, setEndDate] = useState("");
   
   const { data: selectedTx } = useAssetTransactions(selected ?? undefined);
+  // Real bin-card entries from Supabase for the selected asset
+  const { data: binRows = [] } = useBinCardEntries(selected ?? undefined);
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -123,144 +125,93 @@ export default function EnhancedBinCardsPage() {
 
   const filtered = (assets || []).filter((a: any) => {
     const q = search.toLowerCase();
-    return !q || 
-      a.sap_code?.toLowerCase().includes(q) || 
-      a.employees?.name?.toLowerCase().includes(q) || 
+    return !q ||
+      a.sap_code?.toLowerCase().includes(q) ||
+      a.employees?.name?.toLowerCase().includes(q) ||
       a.name?.toLowerCase().includes(q);
   });
 
   const selectedAsset = selected ? (assets || []).find((a: any) => a.id === selected) : null;
 
-  // Comprehensive mock bin card entries with full details
-  const mockBinEntries: BinCardEntry[] = useMemo(() => {
+  // Convert a real bin_card_entries row → the rich BinCardEntry shape this page expects.
+  // Fields the DB doesn't store get sensible defaults from the asset record.
+  const rowToBin = (r: BinCardEntryRow, idx: number): BinCardEntry => {
+    const ts = new Date(r.created_at);
+    const time = ts.toTimeString().split(" ")[0];
+    return {
+      id: r.id,
+      entryNo: idx + 1,
+      date: r.entry_date,
+      time,
+      type: (r.transaction_type === "opening" ? "adjustment" : r.transaction_type) as BinCardEntry["type"],
+      referenceType: r.transaction_type === "receipt" ? "Receipt" : r.transaction_type === "issue" ? "Issue" : "Adjustment",
+      reference: r.reference_no ?? "",
+      receiptQty: r.receipt_qty ?? 0,
+      issueQty: r.issue_qty ?? 0,
+      balanceQty: r.balance_qty ?? 0,
+      unitCost: Number(r.unit_cost ?? 0),
+      totalValue: Number(r.total_value ?? 0),
+      remarks: r.remarks ?? "",
+      user: r.created_by_name ?? "System",
+      userId: r.created_by_id ?? "",
+      department: "",
+      location: selectedAsset?.locations?.name ?? "",
+      approvedBy: "",
+      approvalDate: "",
+      documentNo: r.reference_no ?? "",
+      vendorName: selectedAsset?.vendors?.name ?? "",
+      grnNo: "",
+      poNo: "",
+      employeeCode: selectedAsset?.employees?.employee_code ?? "",
+      employeeName: selectedAsset?.employees?.name ?? "",
+      condition: "",
+      warrantyInfo: "",
+      attachments: [],
+      tags: [],
+    };
+  };
+
+  // Real bin entries (was mockBinEntries — kept variable name so the rest of the page works)
+  const binEntries: BinCardEntry[] = useMemo(() => {
     if (!selectedAsset) return [];
-    return [
-      {
-        id: "entry-001",
-        entryNo: 1,
-        date: selectedAsset.purchase_date || "2024-01-15",
-        time: "10:30:45",
-        type: "receipt",
-        referenceType: "Purchase Order",
-        reference: selectedAsset.purchase_bill_no || `PO-${selectedAsset.sap_code}`,
-        receiptQty: 1,
-        issueQty: 0,
-        balanceQty: 1,
-        unitCost: selectedAsset.purchase_cost || 45000,
-        totalValue: selectedAsset.purchase_cost || 45000,
-        remarks: "Initial purchase - New asset procurement from vendor",
-        user: "Sunny Sobhani",
-        userId: "usr-001",
-        department: "IT Administration",
-        location: selectedAsset.locations?.name || "Mumbai Office",
-        approvedBy: "IT Manager",
-        approvalDate: "2024-01-14",
-        documentNo: selectedAsset.grn_no || `GRN-${selectedAsset.sap_code}`,
-        vendorName: selectedAsset.vendors?.name || "Tech Solutions Pvt Ltd",
-        grnNo: selectedAsset.grn_no || "GRN-2024-001",
-        poNo: `PO-${selectedAsset.sap_code}`,
-        employeeCode: "",
-        employeeName: "",
-        condition: "new",
-        warrantyInfo: "3 Years Manufacturer Warranty",
-        attachments: ["invoice.pdf", "grn_scan.pdf", "warranty_card.pdf"],
-        tags: ["purchase", "new-asset", "mumbai-office"]
-      },
-      {
-        id: "entry-002",
-        entryNo: 2,
-        date: "2024-01-20",
-        time: "14:15:30",
-        type: "issue",
-        referenceType: "Asset Allocation",
-        reference: `AA-${selectedAsset.sap_code}-001`,
-        receiptQty: 0,
-        issueQty: 1,
-        balanceQty: 0,
-        unitCost: 0,
-        totalValue: 0,
-        remarks: "Asset allocated to employee - Finance Department",
-        user: "Rajesh Kumar",
-        userId: "usr-002",
-        department: "IT Support",
-        location: "Finance Department - Floor 2",
-        approvedBy: "Finance Head",
-        approvalDate: "2024-01-19",
-        documentNo: `AA-${selectedAsset.sap_code}-001`,
-        vendorName: "",
-        grnNo: "",
-        poNo: "",
-        employeeCode: "EMP-1023",
-        employeeName: selectedAsset.employees?.name || "Amit Sharma",
-        condition: "new",
-        warrantyInfo: "Warranty transferred to employee",
-        attachments: ["allocation_form.pdf", "employee_acknowledgement.pdf"],
-        tags: ["allocation", "finance-dept", "employee-assignment"]
-      },
-      {
-        id: "entry-003",
-        entryNo: 3,
-        date: "2024-02-15",
-        time: "11:45:00",
-        type: "return",
-        referenceType: "Asset Return",
-        reference: `AR-${selectedAsset.sap_code}-001`,
-        receiptQty: 1,
-        issueQty: 0,
-        balanceQty: 1,
-        unitCost: 0,
-        totalValue: 0,
-        remarks: "Asset returned by employee - Department transfer",
-        user: "Priya Patel",
-        userId: "usr-003",
-        department: "HR Department",
-        location: "IT Storage - Floor 1",
-        approvedBy: "IT Manager",
-        approvalDate: "2024-02-14",
-        documentNo: `AR-${selectedAsset.sap_code}-001`,
-        vendorName: "",
-        grnNo: "",
-        poNo: "",
-        employeeCode: "EMP-1023",
-        employeeName: selectedAsset.employees?.name || "Amit Sharma",
-        condition: "good",
-        warrantyInfo: "Warranty intact - 2 years 11 months remaining",
-        attachments: ["return_form.pdf", "condition_report.pdf"],
-        tags: ["return", "transfer", "storage"]
-      },
-      {
-        id: "entry-004",
-        entryNo: 4,
-        date: "2024-02-20",
-        time: "09:30:15",
-        type: "transfer",
-        referenceType: "Inter-Department Transfer",
-        reference: `IDT-${selectedAsset.sap_code}-001`,
-        receiptQty: 0,
-        issueQty: 0,
-        balanceQty: 1,
-        unitCost: 0,
-        totalValue: 0,
-        remarks: "Asset transferred to Operations Department",
-        user: "Vikram Mehta",
-        userId: "usr-004",
-        department: "Operations",
-        location: "Operations Department - Floor 3",
-        approvedBy: "Operations Head",
-        approvalDate: "2024-02-19",
-        documentNo: `IDT-${selectedAsset.sap_code}-001`,
-        vendorName: "",
-        grnNo: "",
-        poNo: "",
-        employeeCode: "EMP-2045",
-        employeeName: "Suresh Kumar",
-        condition: "good",
-        warrantyInfo: "Warranty continues - 2 years 11 months remaining",
-        attachments: ["transfer_form.pdf", "approval_email.pdf"],
-        tags: ["transfer", "operations", "reassignment"]
-      }
-    ];
-  }, [selectedAsset]);
+    if (binRows.length > 0) return binRows.map(rowToBin);
+    // Fallback: synthesize a single "opening" entry from the asset record
+    // so the UI isn't empty for assets that don't have bin_card_entries yet.
+    return [{
+      id: `synthetic-${selectedAsset.id}`,
+      entryNo: 1,
+      date: selectedAsset.purchase_date || selectedAsset.created_at?.split("T")[0] || new Date().toISOString().split("T")[0],
+      time: "00:00:00",
+      type: "receipt",
+      referenceType: "Opening Balance",
+      reference: selectedAsset.purchase_bill_no || `INIT-${selectedAsset.sap_code}`,
+      receiptQty: 1,
+      issueQty: 0,
+      balanceQty: 1,
+      unitCost: Number(selectedAsset.purchase_cost ?? 0),
+      totalValue: Number(selectedAsset.purchase_cost ?? 0),
+      remarks: "Opening balance — no bin-card entries recorded yet for this asset.",
+      user: "System",
+      userId: "",
+      department: selectedAsset.departments?.name ?? "",
+      location: selectedAsset.locations?.name ?? "",
+      approvedBy: "",
+      approvalDate: "",
+      documentNo: selectedAsset.purchase_bill_no ?? "",
+      vendorName: selectedAsset.vendors?.name ?? "",
+      grnNo: "",
+      poNo: "",
+      employeeCode: selectedAsset.employees?.employee_code ?? "",
+      employeeName: selectedAsset.employees?.name ?? "",
+      condition: "",
+      warrantyInfo: selectedAsset.warranty_end ? `Warranty until ${selectedAsset.warranty_end}` : "",
+      attachments: [],
+      tags: [],
+    }];
+  }, [selectedAsset, binRows]);
+
+  // Backwards-compat alias — the rest of the page still references mockBinEntries
+  const mockBinEntries = binEntries;
 
   // Filter entries
   const filteredEntries = useMemo(() => {

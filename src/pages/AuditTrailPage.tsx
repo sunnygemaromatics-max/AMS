@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
+import { useAuditLogV2, AuditLogV2Row } from "@/hooks/useSupabaseData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import { 
   Search, 
   Filter,
@@ -247,6 +249,66 @@ const mockAuditData: AuditEntry[] = [
   }
 ];
 
+// Convert a real audit_log row into the rich AuditEntry shape this UI expects.
+// Fields the DB doesn't store (severity, device, browser, OS, location, tags)
+// get sensible defaults so the UI keeps rendering.
+function rowToEntry(r: AuditLogV2Row): AuditEntry {
+  const ts = new Date(r.created_at);
+  const date = ts.toISOString().split("T")[0];
+  const time = ts.toTimeString().split(" ")[0];
+  const tableLabel = r.table_name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+  // Build per-field changes from old_values vs new_values
+  const oldVals = (r.old_values ?? {}) as Record<string, unknown>;
+  const newVals = (r.new_values ?? {}) as Record<string, unknown>;
+  const fieldKeys = (r.changed_fields && r.changed_fields.length > 0)
+    ? r.changed_fields
+    : Array.from(new Set([...Object.keys(oldVals), ...Object.keys(newVals)]));
+
+  const changes = fieldKeys.map(field => ({
+    field,
+    fieldLabel: field.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    oldValue: oldVals[field] === undefined || oldVals[field] === null ? "" : String(oldVals[field]),
+    newValue: newVals[field] === undefined || newVals[field] === null ? "" : String(newVals[field]),
+    dataType: typeof (newVals[field] ?? oldVals[field]),
+  }));
+
+  // Best-effort record name from new/old values
+  const recName = (newVals.name ?? oldVals.name ?? newVals.full_name ?? oldVals.full_name ?? r.record_id) as string;
+  const recCode = (newVals.sap_code ?? oldVals.sap_code ?? newVals.code ?? oldVals.code ?? "") as string;
+
+  return {
+    id: r.id,
+    timestamp: r.created_at,
+    date,
+    time,
+    user: r.user_name ?? "System",
+    userId: r.user_id ?? "",
+    userRole: r.user_role ?? "",
+    userDepartment: "",
+    action: r.action,
+    table: r.table_name,
+    tableLabel,
+    recordId: r.record_id,
+    recordName: String(recName ?? r.record_id),
+    recordCode: String(recCode ?? ""),
+    description: r.notes ?? `${r.action} on ${tableLabel}`,
+    changes,
+    ipAddress: r.ip_address ?? "",
+    userAgent: r.user_agent ?? "",
+    deviceType: "desktop",
+    browser: "",
+    os: "",
+    location: "",
+    sessionId: "",
+    requestMethod: r.action === "INSERT" ? "POST" : r.action === "UPDATE" ? "PATCH" : "DELETE",
+    apiEndpoint: `/rest/v1/${r.table_name}/${r.record_id}`,
+    severity: "low",
+    notes: r.notes ?? "",
+    tags: [],
+  };
+}
+
 export default function AuditTrailPage() {
   const [search, setSearch] = useState("");
   const [tableFilter, setTableFilter] = useState("all");
@@ -261,25 +323,29 @@ export default function AuditTrailPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  // Pull real audit_log rows from Supabase and convert to UI shape
+  const { data: rows = [], isLoading, error } = useAuditLogV2({ limit: 500 });
+  const auditData: AuditEntry[] = useMemo(() => rows.map(rowToEntry), [rows]);
+
   // Get unique users for filter
   const uniqueUsers = useMemo(() => {
     const users = new Map();
-    mockAuditData.forEach(entry => {
-      users.set(entry.userId, { id: entry.userId, name: entry.user, role: entry.userRole });
+    auditData.forEach(entry => {
+      if (entry.userId) users.set(entry.userId, { id: entry.userId, name: entry.user, role: entry.userRole });
     });
     return Array.from(users.values());
-  }, []);
+  }, [auditData]);
 
   // Get all unique tags
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    mockAuditData.forEach(entry => entry.tags.forEach(tag => tags.add(tag)));
+    auditData.forEach(entry => entry.tags.forEach(tag => tags.add(tag)));
     return Array.from(tags);
-  }, []);
+  }, [auditData]);
 
   // Filter data with all criteria
   const filteredData = useMemo(() => {
-    return mockAuditData.filter((entry) => {
+    return auditData.filter((entry) => {
       // Search across multiple fields
       const matchesSearch = !search || 
         entry.recordName.toLowerCase().includes(search.toLowerCase()) ||
@@ -310,7 +376,7 @@ export default function AuditTrailPage() {
       return matchesSearch && matchesTable && matchesAction && matchesUser && 
              matchesSeverity && matchesDevice && matchesDate && matchesTags;
     });
-  }, [search, tableFilter, actionFilter, userFilter, severityFilter, deviceFilter, dateRange, startDate, endDate, selectedTags]);
+  }, [auditData, search, tableFilter, actionFilter, userFilter, severityFilter, deviceFilter, dateRange, startDate, endDate, selectedTags]);
 
   // Export functions
   const exportToCSV = () => {
@@ -504,6 +570,32 @@ export default function AuditTrailPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-destructive">Could not load audit log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs bg-background p-3 rounded border overflow-x-auto">
+            {(error as Error).message}
+          </pre>
+          <p className="text-sm text-muted-foreground mt-2">
+            Make sure <code>SETUP_BIN_CARDS_SAFE.sql</code> has been run in the Supabase SQL Editor.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with Export Dropdown */}
@@ -514,7 +606,9 @@ export default function AuditTrailPage() {
             Audit Trail
           </h1>
           <p className="text-muted-foreground text-sm">
-            Complete history of all changes with detailed tracking
+            {auditData.length === 0
+              ? "No audit events recorded yet — actions you take in the app will appear here."
+              : `Complete history of all changes with detailed tracking — ${auditData.length} event${auditData.length === 1 ? "" : "s"} total`}
           </p>
         </div>
         <div className="flex gap-2">
