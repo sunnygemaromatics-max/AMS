@@ -48,7 +48,12 @@ SELECT 'departments', COUNT(*) FROM public.departments
 UNION ALL
 SELECT 'licenses', COUNT(*) FROM public.licenses
 UNION ALL
-SELECT 'bin_cards', COUNT(*) FROM public.bin_cards;
+SELECT 'bin_cards', 
+  CASE 
+    WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'bin_cards' AND table_schema = 'public')
+    THEN (SELECT COUNT(*) FROM public.bin_cards)
+    ELSE 0
+  END;
 
 -- Check 4: Assets with Missing Bin Card Numbers
 SELECT '========================================' as section;
