@@ -46,6 +46,7 @@ const dataNav = [
   { title: "Bulk Import", url: "/import", icon: Upload },
   { title: "Import History", url: "/import/history", icon: History },
   { title: "Activity Timeline", url: "/activity", icon: Activity },
+  { title: "Audit Trail", url: "/audit-trail", icon: History },
 ];
 
 const systemNav = [

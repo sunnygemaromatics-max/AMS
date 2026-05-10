@@ -19,7 +19,7 @@ import NotFound from "./pages/NotFound";
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const AssetsPage = lazy(() => import("./pages/AssetsPage"));
 const AssetDetailPage = lazy(() => import("./pages/AssetDetailPage"));
-const BinCardsPage = lazy(() => import("./pages/BinCardsPage"));
+const BinCardsPage = lazy(() => import("./pages/EnhancedBinCardsPage"));
 const EmployeesPage = lazy(() => import("./pages/EmployeesPage"));
 const LocationsPage = lazy(() => import("./pages/LocationsPage"));
 const LicensesPage = lazy(() => import("./pages/LicensesPage"));
@@ -30,6 +30,7 @@ const BulkImportPage = lazy(() => import("./pages/BulkImportPage"));
 const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const ReportsPage = lazy(() => import("./pages/ReportsPage"));
+const AuditTrailPage = lazy(() => import("./pages/AuditTrailPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +82,7 @@ const App = () => (
                           <Route path="/import/history" element={<ImportHistoryPage />} />
                           <Route path="/activity" element={<ActivityPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
+                          <Route path="/audit-trail" element={<AuditTrailPage />} />
                           <Route path="/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
                           <Route path="/companies" element={<SettingsPage />} />
                           <Route path="/settings" element={<SettingsPage />} />
