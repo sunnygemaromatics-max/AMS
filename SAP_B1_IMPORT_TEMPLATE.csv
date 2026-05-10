@@ -1,0 +1,2 @@
+asset_code,name,serial_number,purchase_date,purchase_cost,sap_bill_no,grn_no,bill_and_grn,sap_vendor,sap_employee_code,sap_employee_name,sap_department,location_code,status,import_notes
+MCD-01,Dell vostro 3670 I3 8100 / 12GB,7G118Q2,2018-12-13,42473,PBN-PSI/19-20/469,GRN-1042/19-20,"PBN-PSI/19-20/469 & GRN-1042/19-20",Regalia Worldwide,001,Saloni Kasare,Sales,MUM,allocated,Sample data row
