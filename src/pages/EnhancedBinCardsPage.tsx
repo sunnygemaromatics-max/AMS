@@ -111,6 +111,9 @@ export default function EnhancedBinCardsPage() {
   const [showEntryDetail, setShowEntryDetail] = useState<BinCardEntry | null>(null);
   const [selectedEntries, setSelectedEntries] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'single' | 'multiple'>('single');
+  const [showMultipleView, setShowMultipleView] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateRange, setDateRange] = useState("all");
   const [startDate, setStartDate] = useState("");
@@ -278,6 +281,38 @@ export default function EnhancedBinCardsPage() {
   }, [mockBinEntries, typeFilter, dateRange, startDate, endDate]);
 
   // Export functions
+  const exportToJSON = () => {
+    const entriesToExport = selectedEntries.length > 0 
+      ? filteredEntries.filter(e => selectedEntries.includes(e.id))
+      : filteredEntries;
+    
+    const data = {
+      exportInfo: {
+        exportedAt: new Date().toISOString(),
+        assetCode: selectedAsset?.sap_code,
+        assetName: selectedAsset?.name,
+        totalEntries: entriesToExport.length,
+        exportedBy: "Asset Harmony System"
+      },
+      assetDetails: selectedAsset ? {
+        id: selectedAsset.id,
+        sapCode: selectedAsset.sap_code,
+        name: selectedAsset.name,
+        category: selectedAsset.categories?.name,
+        location: selectedAsset.locations?.name,
+        assignedTo: selectedAsset.employees?.name,
+        binCardNo: selectedAsset.bin_card_no
+      } : null,
+      entries: entriesToExport
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `bin_card_${selectedAsset?.sap_code || "export"}_${new Date().toISOString().split("T")[0]}.json`;
+    link.click();
+  };
+
   const exportToCSV = () => {
     const entriesToExport = selectedEntries.length > 0 
       ? filteredEntries.filter(e => selectedEntries.includes(e.id))
@@ -409,6 +444,20 @@ export default function EnhancedBinCardsPage() {
     );
   };
 
+  const toggleAssetSelection = (assetId: string) => {
+    setSelectedAssets(prev => 
+      prev.includes(assetId) 
+        ? prev.filter(id => id !== assetId)
+        : [...prev, assetId]
+    );
+  };
+
+  const handleAssetDoubleClick = (assetId: string) => {
+    setSelected(assetId);
+    setViewMode('single');
+    setShowMultipleView(false);
+  };
+
   const selectAllEntries = () => {
     if (selectedEntries.length === filteredEntries.length) {
       setSelectedEntries([]);
@@ -494,6 +543,25 @@ export default function EnhancedBinCardsPage() {
         </div>
         {selectedAsset && (
           <div className="flex gap-2">
+            <Button 
+              variant={viewMode === 'multiple' ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => {
+                if (viewMode === 'single' && selectedAssets.length > 0) {
+                  setViewMode('multiple');
+                  setShowMultipleView(true);
+                } else if (viewMode === 'multiple') {
+                  setViewMode('single');
+                  setShowMultipleView(false);
+                } else {
+                  alert('Please select at least one asset first (use checkboxes)');
+                }
+              }}
+            >
+              <Package className="h-4 w-4 mr-1" /> 
+              {viewMode === 'multiple' ? "Single View" : "Multiple Bin Cards"}
+              {selectedAssets.length > 0 && ` (${selectedAssets.length})`}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
               <Filter className="h-4 w-4 mr-1" /> 
               {showFilters ? "Hide Filters" : "Filters"}
@@ -512,7 +580,11 @@ export default function EnhancedBinCardsPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={exportToCSV}>
                   <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-                  Export as CSV
+                  Export as CSV (Excel)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToJSON}>
+                  <FileText className="h-4 w-4 mr-2 text-orange-600" />
+                  Export as JSON
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={exportToPDF}>
                   <FileText className="h-4 w-4 mr-2 text-red-600" />
@@ -622,35 +694,64 @@ export default function EnhancedBinCardsPage() {
           </div>
           
           <div className="bg-muted/30 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground mb-2">
-              {filtered.length} assets found
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground">
+                {filtered.length} assets found
+              </p>
+              <div className="flex gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 text-xs px-2"
+                  onClick={() => {
+                    if (selectedAssets.length === filtered.length) {
+                      setSelectedAssets([]);
+                    } else {
+                      setSelectedAssets(filtered.map((a: any) => a.id));
+                    }
+                  }}
+                >
+                  {selectedAssets.length === filtered.length ? "Deselect All" : "Select All"}
+                </Button>
+              </div>
+            </div>
             <div className="space-y-1 max-h-[calc(100vh-320px)] overflow-y-auto">
               {filtered.map((asset: any) => (
-                <button 
-                  key={asset.id} 
-                  onClick={() => setSelected(asset.id)} 
-                  className={`w-full text-left px-3 py-3 rounded-lg text-sm transition-all ${
+                <div
+                  key={asset.id}
+                  onDoubleClick={() => handleAssetDoubleClick(asset.id)}
+                  className={`group relative flex items-start gap-2 p-3 rounded-lg text-sm transition-all cursor-pointer ${
                     selected === asset.id 
                       ? 'bg-accent text-white shadow-md' 
                       : 'bg-white hover:bg-accent/10 border border-border/50'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`font-mono font-semibold text-xs ${selected === asset.id ? 'text-white/90' : 'text-accent'}`}>
-                      {asset.sap_code}
-                    </span>
-                    <Badge variant={selected === asset.id ? "secondary" : "outline"} className="text-xs">
-                      #{asset.bin_card_no}
-                    </Badge>
+                  <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox 
+                      checked={selectedAssets.includes(asset.id)}
+                      onCheckedChange={() => toggleAssetSelection(asset.id)}
+                    />
                   </div>
-                  <p className={`font-medium ${selected === asset.id ? 'text-white' : 'text-foreground'}`}>
-                    {asset.name}
-                  </p>
-                  <p className={`text-xs ${selected === asset.id ? 'text-white/70' : 'text-muted-foreground'}`}>
-                    {asset.employees?.name || 'Unassigned'} • {asset.locations?.name || 'No Location'}
-                  </p>
-                </button>
+                  <div 
+                    className="flex-1 min-w-0"
+                    onClick={() => setSelected(asset.id)}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`font-mono font-semibold text-xs ${selected === asset.id ? 'text-white/90' : 'text-accent'}`}>
+                        {asset.sap_code}
+                      </span>
+                      <Badge variant={selected === asset.id ? "secondary" : "outline"} className="text-xs">
+                        #{asset.bin_card_no}
+                      </Badge>
+                    </div>
+                    <p className={`font-medium truncate ${selected === asset.id ? 'text-white' : 'text-foreground'}`}>
+                      {asset.name}
+                    </p>
+                    <p className={`text-xs truncate ${selected === asset.id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                      {asset.employees?.name || 'Unassigned'} • {asset.locations?.name || 'No Location'}
+                    </p>
+                  </div>
+                </div>
               ))}
               {filtered.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">
@@ -1051,6 +1152,160 @@ export default function EnhancedBinCardsPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Multiple Bin Cards View */}
+      <Dialog open={showMultipleView && selectedAssets.length > 0} onOpenChange={() => { setShowMultipleView(false); setViewMode('single'); }}>
+        <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-accent" />
+                Multiple Bin Cards View ({selectedAssets.length} assets)
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const data = {
+                    exportedAt: new Date().toISOString(),
+                    assetCount: selectedAssets.length,
+                    assets: selectedAssets.map(id => {
+                      const asset = (assets || []).find((a: any) => a.id === id);
+                      return {
+                        sapCode: asset?.sap_code,
+                        name: asset?.name,
+                        binCardNo: asset?.bin_card_no,
+                        category: asset?.categories?.name,
+                        location: asset?.locations?.name,
+                        status: asset?.status
+                      };
+                    })
+                  };
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `multiple_bin_cards_${new Date().toISOString().split("T")[0]}.json`;
+                  link.click();
+                }}>
+                  <Download className="h-3 w-3 mr-1" />
+                  Export All (JSON)
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const csvContent = [
+                    "SAP Code,Asset Name,Bin Card No,Category,Location,Status",
+                    ...selectedAssets.map(id => {
+                      const asset = (assets || []).find((a: any) => a.id === id);
+                      return `"${asset?.sap_code}","${asset?.name}","${asset?.bin_card_no}","${asset?.categories?.name || ''}","${asset?.locations?.name || ''}","${asset?.status}"`;
+                    })
+                  ].join("\n");
+                  const blob = new Blob([csvContent], { type: "text/csv" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `multiple_bin_cards_${new Date().toISOString().split("T")[0]}.csv`;
+                  link.click();
+                }}>
+                  <FileSpreadsheet className="h-3 w-3 mr-1" />
+                  Export All (CSV)
+                </Button>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {selectedAssets.map(id => {
+                const asset = (assets || []).find((a: any) => a.id === id);
+                if (!asset) return null;
+                return (
+                  <Card key={id} className="border-2 hover:border-accent transition-colors">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className="font-mono text-xs">#{asset.bin_card_no}</Badge>
+                        <StatusBadge status={statusLabel(asset.status)} />
+                      </div>
+                      <p className="font-mono text-sm text-accent font-semibold">{asset.sap_code}</p>
+                      <p className="font-medium text-sm leading-tight">{asset.name}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="text-xs space-y-1">
+                        <p className="text-muted-foreground flex items-center gap-1">
+                          <User className="h-3 w-3" /> {asset.employees?.name || 'Unassigned'}
+                        </p>
+                        <p className="text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" /> {asset.locations?.name || '—'}
+                        </p>
+                        <p className="text-muted-foreground flex items-center gap-1">
+                          <FileText className="h-3 w-3" /> {asset.purchase_bill_no || '—'}
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Balance: <strong className="text-accent">1</strong></span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setSelected(id);
+                            setShowMultipleView(false);
+                            setViewMode('single');
+                          }}
+                        >
+                          <Eye className="h-3 w-3 mr-1" /> View
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+            
+            {/* Summary Table */}
+            <Card className="border">
+              <CardHeader>
+                <CardTitle className="text-sm">Summary Table</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left py-2 px-3">Bin Card #</th>
+                        <th className="text-left py-2 px-3">SAP Code</th>
+                        <th className="text-left py-2 px-3">Asset Name</th>
+                        <th className="text-left py-2 px-3">Category</th>
+                        <th className="text-left py-2 px-3">Location</th>
+                        <th className="text-left py-2 px-3">Status</th>
+                        <th className="text-center py-2 px-3">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {selectedAssets.map(id => {
+                        const asset = (assets || []).find((a: any) => a.id === id);
+                        if (!asset) return null;
+                        return (
+                          <tr key={id} className="hover:bg-muted/30">
+                            <td className="py-2 px-3 font-mono">#{asset.bin_card_no}</td>
+                            <td className="py-2 px-3 font-mono text-accent">{asset.sap_code}</td>
+                            <td className="py-2 px-3">{asset.name}</td>
+                            <td className="py-2 px-3">{asset.categories?.name || '—'}</td>
+                            <td className="py-2 px-3">{asset.locations?.name || '—'}</td>
+                            <td className="py-2 px-3">
+                              <StatusBadge status={statusLabel(asset.status)} />
+                            </td>
+                            <td className="py-2 px-3 text-center font-bold text-accent">1</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot className="bg-accent/5 font-medium">
+                      <tr>
+                        <td colSpan={6} className="py-2 px-3 text-right">Total Assets:</td>
+                        <td className="py-2 px-3 text-center font-bold text-accent">{selectedAssets.length}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </DialogContent>
       </Dialog>
 
