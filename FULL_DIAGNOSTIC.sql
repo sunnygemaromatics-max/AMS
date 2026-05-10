@@ -69,7 +69,7 @@ SELECT '========================================' as section;
 SELECT '4. ASSETS MISSING BIN CARD NUMBERS' as status;
 SELECT '========================================' as section;
 
-SELECT asset_code, name, bin_card_no
+SELECT sap_code, name, bin_card_no
 FROM public.assets
 WHERE bin_card_no IS NULL OR bin_card_no = 0
 LIMIT 10;
@@ -88,10 +88,10 @@ DECLARE
     v_count INTEGER := 0;
 BEGIN
     FOR v_asset IN 
-        SELECT id, asset_code 
+        SELECT id, sap_code 
         FROM public.assets 
         WHERE bin_card_no IS NULL OR bin_card_no = 0
-        ORDER BY created_at, asset_code
+        ORDER BY created_at, sap_code
     LOOP
         SELECT COALESCE(MAX(bin_card_no), 0) + 1 INTO v_next_number FROM public.assets;
         
@@ -115,8 +115,8 @@ SELECT '6. VERIFY BIN CARD NUMBERS' as status;
 SELECT '========================================' as section;
 
 SELECT 
-    asset_code, 
-    name, 
+    sap_code,
+    name,
     bin_card_no,
     CASE WHEN bin_card_no IS NOT NULL THEN 'OK' ELSE 'MISSING' END as status
 FROM public.assets
