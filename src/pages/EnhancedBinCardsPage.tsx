@@ -117,64 +117,51 @@ export default function EnhancedBinCardsPage() {
   // Real bin-card entries from Supabase for the selected asset
   const { data: binRows = [] } = useBinCardEntries(selected ?? undefined);
 
-  if (isLoading) return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-    </div>
-  );
-
-  const filtered = (assets || []).filter((a: any) => {
-    const q = search.toLowerCase();
-    return !q ||
-      a.sap_code?.toLowerCase().includes(q) ||
-      a.employees?.name?.toLowerCase().includes(q) ||
-      a.name?.toLowerCase().includes(q);
-  });
-
+  // ── Hooks must run on every render: keep all useMemo/useState above
+  //    any conditional return. ──
   const selectedAsset = selected ? (assets || []).find((a: any) => a.id === selected) : null;
 
-  // Convert a real bin_card_entries row → the rich BinCardEntry shape this page expects.
-  // Fields the DB doesn't store get sensible defaults from the asset record.
-  const rowToBin = (r: BinCardEntryRow, idx: number): BinCardEntry => {
-    const ts = new Date(r.created_at);
-    const time = ts.toTimeString().split(" ")[0];
-    return {
-      id: r.id,
-      entryNo: idx + 1,
-      date: r.entry_date,
-      time,
-      type: (r.transaction_type === "opening" ? "adjustment" : r.transaction_type) as BinCardEntry["type"],
-      referenceType: r.transaction_type === "receipt" ? "Receipt" : r.transaction_type === "issue" ? "Issue" : "Adjustment",
-      reference: r.reference_no ?? "",
-      receiptQty: r.receipt_qty ?? 0,
-      issueQty: r.issue_qty ?? 0,
-      balanceQty: r.balance_qty ?? 0,
-      unitCost: Number(r.unit_cost ?? 0),
-      totalValue: Number(r.total_value ?? 0),
-      remarks: r.remarks ?? "",
-      user: r.created_by_name ?? "System",
-      userId: r.created_by_id ?? "",
-      department: "",
-      location: selectedAsset?.locations?.name ?? "",
-      approvedBy: "",
-      approvalDate: "",
-      documentNo: r.reference_no ?? "",
-      vendorName: selectedAsset?.vendors?.name ?? "",
-      grnNo: "",
-      poNo: "",
-      employeeCode: selectedAsset?.employees?.employee_code ?? "",
-      employeeName: selectedAsset?.employees?.name ?? "",
-      condition: "",
-      warrantyInfo: "",
-      attachments: [],
-      tags: [],
-    };
-  };
-
-  // Real bin entries (was mockBinEntries — kept variable name so the rest of the page works)
+  // Real bin entries (was mockBinEntries — kept the variable name so the rest of the page works)
   const binEntries: BinCardEntry[] = useMemo(() => {
     if (!selectedAsset) return [];
+
+    const rowToBin = (r: BinCardEntryRow, idx: number): BinCardEntry => {
+      const ts = new Date(r.created_at);
+      return {
+        id: r.id,
+        entryNo: idx + 1,
+        date: r.entry_date,
+        time: ts.toTimeString().split(" ")[0],
+        type: (r.transaction_type === "opening" ? "adjustment" : r.transaction_type) as BinCardEntry["type"],
+        referenceType: r.transaction_type === "receipt" ? "Receipt" : r.transaction_type === "issue" ? "Issue" : "Adjustment",
+        reference: r.reference_no ?? "",
+        receiptQty: r.receipt_qty ?? 0,
+        issueQty: r.issue_qty ?? 0,
+        balanceQty: r.balance_qty ?? 0,
+        unitCost: Number(r.unit_cost ?? 0),
+        totalValue: Number(r.total_value ?? 0),
+        remarks: r.remarks ?? "",
+        user: r.created_by_name ?? "System",
+        userId: r.created_by_id ?? "",
+        department: "",
+        location: selectedAsset?.locations?.name ?? "",
+        approvedBy: "",
+        approvalDate: "",
+        documentNo: r.reference_no ?? "",
+        vendorName: selectedAsset?.vendors?.name ?? "",
+        grnNo: "",
+        poNo: "",
+        employeeCode: selectedAsset?.employees?.employee_code ?? "",
+        employeeName: selectedAsset?.employees?.name ?? "",
+        condition: "",
+        warrantyInfo: "",
+        attachments: [],
+        tags: [],
+      };
+    };
+
     if (binRows.length > 0) return binRows.map(rowToBin);
+
     // Fallback: synthesize a single "opening" entry from the asset record
     // so the UI isn't empty for assets that don't have bin_card_entries yet.
     return [{
@@ -224,6 +211,21 @@ export default function EnhancedBinCardsPage() {
       return matchesType && matchesDate;
     });
   }, [mockBinEntries, typeFilter, dateRange, startDate, endDate]);
+
+  // Early return must come AFTER every hook
+  if (isLoading) return (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  const filtered = (assets || []).filter((a: any) => {
+    const q = search.toLowerCase();
+    return !q ||
+      a.sap_code?.toLowerCase().includes(q) ||
+      a.employees?.name?.toLowerCase().includes(q) ||
+      a.name?.toLowerCase().includes(q);
+  });
 
   // Export functions
   const exportToJSON = () => {

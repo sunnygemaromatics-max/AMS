@@ -531,7 +531,7 @@ export function useBinCardEntries(assetId?: string) {
       if (error) throw error;
       return (data ?? []) as BinCardEntryRow[];
     },
-    enabled: assetId === undefined ? true : !!assetId,
+    enabled: !!assetId,
   });
 }
 
