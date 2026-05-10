@@ -160,7 +160,7 @@ BEGIN
 
       EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
     EXCEPTION WHEN undefined_table THEN
-      RAISE NOTICE 'Skipping %% — table does not exist', t;
+      RAISE NOTICE 'Skipping % — table does not exist', t;
     END;
   END LOOP;
 END $$;
