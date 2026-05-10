@@ -38,7 +38,9 @@ import {
   ArrowRight
 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { exportBinCard } from "@/lib/pdf";
+import { exportBinCard, exportMultipleBinCards } from "@/lib/pdf";
+import { exportCSV, exportJSON, exportXLSX, printTable, ExportColumn } from "@/lib/exporters";
+import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -346,7 +348,52 @@ export default function EnhancedBinCardsPage() {
 
   const exportToPDF = () => {
     if (selectedAsset) {
-      exportBinCard(selectedAsset, selectedTx || []);
+      // Pass both the asset_transactions ledger AND the bin_card_entries
+      // ledger (the page itself shows the latter, so the PDF should too).
+      exportBinCard(selectedAsset, selectedTx || [], filteredEntries);
+    }
+  };
+
+  // Used by the Multiple Bin Cards View dialog. Exports all selected assets
+  // in the chosen format. PDF gets one card per page (with Asset Details +
+  // Bin Card Entries + Transaction Ledger). The other formats render a
+  // flat summary table.
+  const exportMultiple = async (format: "csv" | "json" | "xlsx" | "pdf" | "print") => {
+    const picked = (assets || []).filter((a: any) => selectedAssets.includes(a.id));
+    if (picked.length === 0) {
+      toast({ title: "Nothing selected", description: "Select at least one asset first.", variant: "destructive" });
+      return;
+    }
+    try {
+      if (format === "pdf") {
+        exportMultipleBinCards(picked.map((a: any) => ({ asset: a, transactions: [], binEntries: [] })));
+        toast({ title: "PDF ready", description: `${picked.length} bin cards exported.` });
+        return;
+      }
+
+      const cols: ExportColumn<any>[] = [
+        { key: "bin_card_no", label: "Bin Card #",  width: 12 },
+        { key: "sap_code",    label: "SAP Code",    width: 14 },
+        { key: "name",        label: "Asset Name",  width: 36 },
+        { key: "asset_subtype",label:"Type",        width: 14 },
+        { key: "categories",  label: "Category",    width: 22, get: (a: any) => a.categories?.name ?? "" },
+        { key: "locations",   label: "Location",    width: 22, get: (a: any) => a.locations?.name ?? "" },
+        { key: "departments", label: "Department",  width: 22, get: (a: any) => a.departments?.name ?? "" },
+        { key: "employees",   label: "Assigned to", width: 22, get: (a: any) => a.employees?.name ?? "Unassigned" },
+        { key: "vendors",     label: "Vendor",      width: 22, get: (a: any) => a.vendors?.name ?? "" },
+        { key: "status",      label: "Status",      width: 14 },
+        { key: "purchase_cost", label:"Cost",       width: 12 },
+      ];
+      const stem = `multiple_bin_cards_${picked.length}`;
+      switch (format) {
+        case "csv":   exportCSV(picked, cols, stem); break;
+        case "json":  exportJSON(picked, stem); break;
+        case "xlsx":  await exportXLSX(picked, cols, stem, "Bin Cards"); break;
+        case "print": printTable(picked, cols, "Multiple Bin Cards", `${picked.length} assets`); break;
+      }
+      toast({ title: "Export ready", description: `${picked.length} assets exported as ${format.toUpperCase()}.` });
+    } catch (err) {
+      toast({ title: "Export failed", description: (err as Error).message, variant: "destructive" });
     }
   };
 
@@ -1137,50 +1184,39 @@ export default function EnhancedBinCardsPage() {
                 <Package className="h-5 w-5 text-accent" />
                 Multiple Bin Cards View ({selectedAssets.length} assets)
               </span>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => {
-                  const data = {
-                    exportedAt: new Date().toISOString(),
-                    assetCount: selectedAssets.length,
-                    assets: selectedAssets.map(id => {
-                      const asset = (assets || []).find((a: any) => a.id === id);
-                      return {
-                        sapCode: asset?.sap_code,
-                        name: asset?.name,
-                        binCardNo: asset?.bin_card_no,
-                        category: asset?.categories?.name,
-                        location: asset?.locations?.name,
-                        status: asset?.status
-                      };
-                    })
-                  };
-                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `multiple_bin_cards_${new Date().toISOString().split("T")[0]}.json`;
-                  link.click();
-                }}>
-                  <Download className="h-3 w-3 mr-1" />
-                  Export All (JSON)
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => {
-                  const csvContent = [
-                    "SAP Code,Asset Name,Bin Card No,Category,Location,Status",
-                    ...selectedAssets.map(id => {
-                      const asset = (assets || []).find((a: any) => a.id === id);
-                      return `"${asset?.sap_code}","${asset?.name}","${asset?.bin_card_no}","${asset?.categories?.name || ''}","${asset?.locations?.name || ''}","${asset?.status}"`;
-                    })
-                  ].join("\n");
-                  const blob = new Blob([csvContent], { type: "text/csv" });
-                  const link = document.createElement("a");
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `multiple_bin_cards_${new Date().toISOString().split("T")[0]}.csv`;
-                  link.click();
-                }}>
-                  <FileSpreadsheet className="h-3 w-3 mr-1" />
-                  Export All (CSV)
-                </Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-3 w-3 mr-1" />
+                    Export All
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>{selectedAssets.length} asset{selectedAssets.length === 1 ? "" : "s"}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => exportMultiple("xlsx")}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" />
+                    Excel (.xlsx)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => exportMultiple("pdf")}>
+                    <FileText className="h-4 w-4 mr-2 text-red-600" />
+                    PDF — one card per page
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => exportMultiple("csv")}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                    CSV (.csv)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => exportMultiple("json")}>
+                    <FileText className="h-4 w-4 mr-2 text-orange-600" />
+                    JSON (.json)
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => exportMultiple("print")}>
+                    <Printer className="h-4 w-4 mr-2 text-blue-600" />
+                    Print Summary
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">

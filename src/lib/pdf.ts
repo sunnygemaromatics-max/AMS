@@ -99,8 +99,9 @@ function footer(doc: jsPDF) {
   }
 }
 
-function buildBinCardDoc(asset: any, transactions: any[]) {
-  const doc = new jsPDF({ format: "a4" });
+// Renders one bin card onto an existing jsPDF doc (used by both the single
+// and multiple-bin-cards exporters).
+function renderBinCardSection(doc: jsPDF, asset: any, transactions: any[], binEntries?: any[]) {
   header(doc, "BIN CARD", `Asset: ${asset.sap_code} — ${asset.name}`);
 
   let y = 38;
@@ -120,36 +121,92 @@ function buildBinCardDoc(asset: any, transactions: any[]) {
     columnStyles: { 0: { fontStyle: "bold", cellWidth: 32 }, 2: { fontStyle: "bold", cellWidth: 32 } },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 8;
-  doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text("Transaction Ledger", 14, finalY);
+  // ── Bin Card Entries section (the real ledger the page shows) ──
+  if (binEntries && binEntries.length > 0) {
+    const finalY1 = (doc as any).lastAutoTable.finalY + 8;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.text("Bin Card Entries", 14, finalY1);
+
+    autoTable(doc, {
+      startY: finalY1 + 3,
+      head: [["#", "Date", "Type", "Reference", "Receipt", "Issue", "Balance", "User", "Remarks"]],
+      body: binEntries.map((e: any, i: number) => [
+        e.entryNo ?? i + 1,
+        e.date ?? "",
+        (e.type ?? "").toString().toUpperCase(),
+        e.reference ?? "",
+        e.receiptQty ?? 0,
+        e.issueQty ?? 0,
+        e.balanceQty ?? 0,
+        e.user ?? "",
+        e.remarks ?? "",
+      ]),
+      headStyles: { fillColor: HEADER_BG, textColor: 255, fontSize: 9 },
+      styles: { fontSize: 8 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { cellWidth: 8, halign: "right" },
+        4: { halign: "right" },
+        5: { halign: "right" },
+        6: { halign: "right", fontStyle: "bold" },
+      },
+    });
+  }
+
+  // ── Asset Transaction Ledger (from asset_transactions table) ──
+  const finalY2 = (doc as any).lastAutoTable.finalY + 8;
+  doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+  doc.text("Asset Transaction Ledger", 14, finalY2);
+
+  const txRows = (transactions || []).map((t) => [
+    t.created_at ? new Date(t.created_at).toLocaleDateString() : "",
+    t.transaction_type ?? "",
+    t.from_employee_id ? "Emp" : t.from_location_id ? "Loc" : "-",
+    t.employees?.name || t.locations?.name || "-",
+    t.notes || "-",
+  ]);
 
   autoTable(doc, {
-    startY: finalY + 3,
+    startY: finalY2 + 3,
     head: [["Date", "Type", "From", "To", "Notes"]],
-    body: (transactions || []).map((t) => [
-      new Date(t.created_at).toLocaleDateString(),
-      t.transaction_type,
-      t.from_employee_id ? "Emp" : t.from_location_id ? "Loc" : "-",
-      t.employees?.name || t.locations?.name || "-",
-      t.notes || "-",
-    ]),
-    headStyles: { fillColor: HEADER_BG, textColor: 255 },
-    styles: { fontSize: 9 },
+    body: txRows.length > 0 ? txRows : [["—", "No allocation/return/transfer events recorded yet", "", "", ""]],
+    headStyles: { fillColor: HEADER_BG, textColor: 255, fontSize: 9 },
+    styles: { fontSize: 8 },
     alternateRowStyles: { fillColor: [248, 250, 252] },
   });
+}
 
+function buildBinCardDoc(asset: any, transactions: any[], binEntries?: any[]) {
+  const doc = new jsPDF({ format: "a4" });
+  renderBinCardSection(doc, asset, transactions, binEntries);
   footer(doc);
   return doc;
 }
 
-export function exportBinCard(asset: any, transactions: any[]) {
-  const doc = buildBinCardDoc(asset, transactions);
+export function exportBinCard(asset: any, transactions: any[], binEntries?: any[]) {
+  const doc = buildBinCardDoc(asset, transactions, binEntries);
   doc.save(`bin-card-${asset.sap_code}.pdf`);
 }
 
-export function buildBinCardBlob(asset: any, transactions: any[]): Blob {
-  const doc = buildBinCardDoc(asset, transactions);
+export function buildBinCardBlob(asset: any, transactions: any[], binEntries?: any[]): Blob {
+  const doc = buildBinCardDoc(asset, transactions, binEntries);
   return doc.output("blob");
+}
+
+/**
+ * One PDF containing every bin card, paginated. Used by the Multiple Bin
+ * Cards View dialog.
+ */
+export function exportMultipleBinCards(
+  rows: { asset: any; transactions?: any[]; binEntries?: any[] }[],
+): void {
+  if (rows.length === 0) return;
+  const doc = new jsPDF({ format: "a4" });
+  rows.forEach((r, i) => {
+    if (i > 0) doc.addPage("a4");
+    renderBinCardSection(doc, r.asset, r.transactions ?? [], r.binEntries);
+  });
+  footer(doc);
+  doc.save(`multiple-bin-cards-${rows.length}-assets.pdf`);
 }
 
 export function exportAssetReport(assets: any[]) {
