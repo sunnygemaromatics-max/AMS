@@ -312,6 +312,38 @@ export default function EnhancedBinCardsPage() {
     link.click();
   };
 
+  const exportToExcel = async () => {
+    const entriesToExport = selectedEntries.length > 0
+      ? filteredEntries.filter(e => selectedEntries.includes(e.id))
+      : filteredEntries;
+    const { exportXLSX } = await import("@/lib/exporters");
+    await exportXLSX(
+      entriesToExport,
+      [
+        { key: "entryNo",      label: "Entry #",       width: 9  },
+        { key: "date",         label: "Date",          width: 12 },
+        { key: "time",         label: "Time",          width: 10 },
+        { key: "type",         label: "Type",          width: 14 },
+        { key: "referenceType",label: "Reference Type",width: 18 },
+        { key: "reference",    label: "Reference",     width: 22 },
+        { key: "receiptQty",   label: "Receipt",       width: 9  },
+        { key: "issueQty",     label: "Issue",         width: 9  },
+        { key: "balanceQty",   label: "Balance",       width: 9  },
+        { key: "unitCost",     label: "Unit Cost",     width: 12 },
+        { key: "totalValue",   label: "Total Value",   width: 14 },
+        { key: "user",         label: "User",          width: 22 },
+        { key: "department",   label: "Department",    width: 18 },
+        { key: "location",     label: "Location",      width: 22 },
+        { key: "vendorName",   label: "Vendor",        width: 22 },
+        { key: "employeeCode", label: "Emp Code",      width: 12 },
+        { key: "employeeName", label: "Employee",      width: 22 },
+        { key: "remarks",      label: "Remarks",       width: 36 },
+      ],
+      `bin_card_${selectedAsset?.sap_code || "export"}`,
+      "Bin Card Entries",
+    );
+  };
+
   const exportToPDF = () => {
     if (selectedAsset) {
       exportBinCard(selectedAsset, selectedTx || []);
@@ -511,21 +543,26 @@ export default function EnhancedBinCardsPage() {
                   <Download className="h-4 w-4 mr-1" /> Export
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Export Options</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={exportToCSV}>
-                  <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
-                  Export as CSV (Excel)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={exportToJSON}>
-                  <FileText className="h-4 w-4 mr-2 text-orange-600" />
-                  Export as JSON
+                <DropdownMenuItem onClick={exportToExcel}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" />
+                  Excel (.xlsx)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={exportToPDF}>
                   <FileText className="h-4 w-4 mr-2 text-red-600" />
-                  Export as PDF
+                  PDF (.pdf)
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToCSV}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                  CSV (.csv)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToJSON}>
+                  <FileText className="h-4 w-4 mr-2 text-orange-600" />
+                  JSON (.json)
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={printBinCard}>
                   <Printer className="h-4 w-4 mr-2 text-blue-600" />
                   Print Bin Card

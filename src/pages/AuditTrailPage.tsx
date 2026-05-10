@@ -5,6 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportCSV, exportJSON, exportXLSX, exportPDF, printTable, ExportColumn } from "@/lib/exporters";
+import { toast } from "@/hooks/use-toast";
 import { 
   Search, 
   Filter,
@@ -378,92 +388,54 @@ export default function AuditTrailPage() {
     });
   }, [auditData, search, tableFilter, actionFilter, userFilter, severityFilter, deviceFilter, dateRange, startDate, endDate, selectedTags]);
 
-  // Export functions
-  const exportToCSV = () => {
-    const headers = [
-      "ID", "Timestamp", "Date", "Time", "User", "User Role", "Department",
-      "Action", "Table", "Record Name", "Record Code", "Description",
-      "IP Address", "Device Type", "Browser", "OS", "Location",
-      "Severity", "Changes", "Tags", "Notes"
-    ];
-    
-    const rows = filteredData.map(entry => [
-      entry.id,
-      entry.timestamp,
-      entry.date,
-      entry.time,
-      entry.user,
-      entry.userRole,
-      entry.userDepartment,
-      entry.action,
-      entry.tableLabel,
-      entry.recordName,
-      entry.recordCode,
-      entry.description,
-      entry.ipAddress,
-      entry.deviceType,
-      entry.browser,
-      entry.os,
-      entry.location,
-      entry.severity,
-      entry.changes.map(c => `${c.fieldLabel}: ${c.oldValue} → ${c.newValue}`).join("; "),
-      entry.tags.join(", "),
-      entry.notes
-    ]);
-    
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-    ].join("\n");
-    
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `audit_trail_${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-  };
+  // ── Unified column definition consumed by every export format ──
+  const exportCols: ExportColumn<AuditEntry>[] = [
+    { key: "timestamp",   label: "Timestamp",   width: 22 },
+    { key: "user",        label: "User",        width: 24 },
+    { key: "userRole",    label: "Role",        width: 12 },
+    { key: "action",      label: "Action",      width: 10 },
+    { key: "tableLabel",  label: "Table",       width: 16 },
+    { key: "recordName",  label: "Record",      width: 28 },
+    { key: "recordCode",  label: "Code",        width: 16 },
+    { key: "description", label: "Description", width: 36 },
+    {
+      key: "changes",
+      label: "Changes",
+      width: 50,
+      get: r => r.changes.map(c => `${c.fieldLabel}: ${c.oldValue || "(empty)"} → ${c.newValue || "(empty)"}`).join("; "),
+    },
+    { key: "ipAddress",   label: "IP Address",  width: 16 },
+    { key: "notes",       label: "Notes",       width: 30 },
+  ];
 
-  const exportToJSON = () => {
-    const jsonContent = JSON.stringify(filteredData, null, 2);
-    const blob = new Blob([jsonContent], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `audit_trail_${new Date().toISOString().split("T")[0]}.json`;
-    link.click();
-  };
+  const STEM = "audit_trail";
+  const TITLE = "Audit Trail Report";
 
-  const printAuditLog = () => {
-    const printWindow = window.open("", "_blank");
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head><title>Audit Trail Report</title></head>
-          <body>
-            <h1>Audit Trail Report - ${new Date().toLocaleDateString()}</h1>
-            <table border="1" cellpadding="5" cellspacing="0">
-              <tr>
-                <th>Timestamp</th><th>User</th><th>Action</th><th>Table</th>
-                <th>Record</th><th>Changes</th><th>IP Address</th>
-              </tr>
-              ${filteredData.map(entry => `
-                <tr>
-                  <td>${entry.timestamp}</td>
-                  <td>${entry.user}</td>
-                  <td>${entry.action}</td>
-                  <td>${entry.tableLabel}</td>
-                  <td>${entry.recordName}</td>
-                  <td>${entry.changes.map(c => `${c.fieldLabel}: ${c.oldValue} → ${c.newValue}`).join("<br>")}</td>
-                  <td>${entry.ipAddress}</td>
-                </tr>
-              `).join("")}
-            </table>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
+  const handleExport = async (
+    format: "csv" | "json" | "xlsx" | "pdf" | "print",
+  ) => {
+    if (filteredData.length === 0) {
+      toast({ title: "Nothing to export", description: "No rows match the current filters.", variant: "destructive" });
+      return;
+    }
+    try {
+      switch (format) {
+        case "csv":   exportCSV(filteredData, exportCols, STEM); break;
+        case "json":  exportJSON(filteredData, STEM); break;
+        case "xlsx":  await exportXLSX(filteredData, exportCols, STEM, "Audit Trail"); break;
+        case "pdf":   await exportPDF(filteredData, exportCols, STEM, TITLE, `${filteredData.length} events — ${new Date().toLocaleDateString()}`); break;
+        case "print": printTable(filteredData, exportCols, TITLE, `${filteredData.length} events`); break;
+      }
+      toast({ title: "Export ready", description: `${filteredData.length} rows exported as ${format.toUpperCase()}.` });
+    } catch (err) {
+      toast({ title: "Export failed", description: (err as Error).message, variant: "destructive" });
     }
   };
+
+  // Legacy aliases — kept so any leftover refs still compile
+  const exportToCSV   = () => handleExport("csv");
+  const exportToJSON  = () => handleExport("json");
+  const printAuditLog = () => handleExport("print");
 
   const clearFilters = () => {
     setSearch("");
@@ -616,32 +588,39 @@ export default function AuditTrailPage() {
             <Filter className="h-4 w-4 mr-2" />
             {showFilters ? "Hide Filters" : "Show Filters"}
           </Button>
-          <Select>
-            <SelectTrigger className="w-[140px]">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="csv" onClick={exportToCSV}>
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                  Export as CSV
-                </div>
-              </SelectItem>
-              <SelectItem value="json" onClick={exportToJSON}>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                  Export as JSON
-                </div>
-              </SelectItem>
-              <SelectItem value="print" onClick={printAuditLog}>
-                <div className="flex items-center gap-2">
-                  <Printer className="h-4 w-4 text-purple-600" />
-                  Print Report
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Download {filteredData.length} row{filteredData.length === 1 ? "" : "s"}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => handleExport("xlsx")}>
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" />
+                Excel (.xlsx)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleExport("pdf")}>
+                <FileText className="h-4 w-4 mr-2 text-red-600" />
+                PDF (.pdf)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleExport("csv")}>
+                <FileSpreadsheet className="h-4 w-4 mr-2 text-green-600" />
+                CSV (.csv)
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleExport("json")}>
+                <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                JSON (.json)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => handleExport("print")}>
+                <Printer className="h-4 w-4 mr-2 text-purple-600" />
+                Print
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
