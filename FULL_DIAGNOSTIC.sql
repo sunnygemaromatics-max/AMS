@@ -168,9 +168,19 @@ CREATE TABLE IF NOT EXISTS public.bin_cards (
 -- Enable RLS on bin_cards
 ALTER TABLE public.bin_cards ENABLE ROW LEVEL SECURITY;
 
--- Create policies for bin_cards
-CREATE POLICY IF NOT EXISTS "Allow all on bin_cards" 
-ON public.bin_cards FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Create policies for bin_cards (handle if already exists)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'bin_cards' 
+    AND policyname = 'Allow all on bin_cards'
+  ) THEN
+    CREATE POLICY "Allow all on bin_cards" 
+    ON public.bin_cards FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
 
 -- Create index
 CREATE INDEX IF NOT EXISTS idx_bin_cards_asset ON public.bin_cards(asset_id);
