@@ -15,12 +15,6 @@ import { parseDbError } from "@/lib/supabase-error";
 const EMPTY = { name: "", code: "", address: "", company_id: "" };
 type FormMode = "closed" | "create" | "edit";
 
-// Helper component for permission-based rendering
-function AdminOnly({ children, isAdmin }: { children: React.ReactNode; isAdmin: boolean }) {
-  if (!isAdmin) return null;
-  return <>{children}</>;
-}
-
 export default function LocationsPage() {
   const { data: locations, isLoading } = useLocations();
   const { data: assets } = useAssets();

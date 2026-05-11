@@ -65,7 +65,6 @@ export default function QRCodeGenerationPage() {
   const [previewAsset, setPreviewAsset] = useState<any>(null);
   const [printFormat, setPrintFormat] = useState<"a4-24" | "a4-12" | "single">("a4-24");
   const [isGenerating, setIsGenerating] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
 
   const filtered = (assets || []).filter((a: any) => {
     const q = search.toLowerCase();
@@ -549,8 +548,6 @@ export default function QRCodeGenerationPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Hidden print container */}
-      <div ref={printRef} className="hidden" />
     </div>
   );
 }
