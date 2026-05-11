@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocations, useAssets, useEmployees, useCompanies, useCreateLocation, useUpdateLocation, useDeactivateLocation } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Package, Users, Plus, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,6 +15,12 @@ import { parseDbError } from "@/lib/supabase-error";
 const EMPTY = { name: "", code: "", address: "", company_id: "" };
 type FormMode = "closed" | "create" | "edit";
 
+// Helper component for permission-based rendering
+function AdminOnly({ children, isAdmin }: { children: React.ReactNode; isAdmin: boolean }) {
+  if (!isAdmin) return null;
+  return <>{children}</>;
+}
+
 export default function LocationsPage() {
   const { data: locations, isLoading } = useLocations();
   const { data: assets } = useAssets();
@@ -22,6 +29,7 @@ export default function LocationsPage() {
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
   const deactivateLocation = useDeactivateLocation();
+  const { isAdmin, canManageLocations } = useAuth();
 
   const [mode, setMode] = useState<FormMode>("closed");
   const [editing, setEditing] = useState<any>(null);
@@ -78,7 +86,9 @@ export default function LocationsPage() {
           <h1 className="text-2xl font-bold">Locations</h1>
           <p className="text-muted-foreground text-sm">Manage office and warehouse locations</p>
         </div>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> Add Location</Button>
+        {(isAdmin || canManageLocations) && (
+          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> Add Location</Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -99,11 +109,13 @@ export default function LocationsPage() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(loc)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
-                      </AlertDialogTrigger>
+                    {(isAdmin || canManageLocations) && (
+                      <>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(loc)}><Pencil className="h-3.5 w-3.5" /></Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Deactivate {loc.name}?</AlertDialogTitle>
@@ -115,6 +127,8 @@ export default function LocationsPage() {
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardHeader>

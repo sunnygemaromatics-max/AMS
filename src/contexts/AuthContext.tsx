@@ -30,6 +30,18 @@ interface AuthCtx {
   isAdmin: boolean;
   canWrite: boolean;
   canEditEmployees: boolean;
+  canDelete: boolean;
+  canManageUsers: boolean;
+  canManageCompanies: boolean;
+  canManageLocations: boolean;
+  canManageVendors: boolean;
+  canManageCategories: boolean;
+  canManageLicenses: boolean;
+  canManageOrganisation: boolean;
+  canManageDepartments: boolean;
+  canManageDesignations: boolean;
+  canManageAssetTypes: boolean;
+  isFullAdmin: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -83,12 +95,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = roles.includes("admin");
   const isApproved = profile?.approval_status === "approved";
+  
+  // Admin has FULL access to everything
+  const isFullAdmin = isAdmin;
   const canWrite = isApproved && (isAdmin || roles.includes("it"));
   const canEditEmployees = isApproved && (isAdmin || roles.includes("it") || roles.includes("hr"));
+  
+  // Admin can delete any record
+  const canDelete = isAdmin;
+  
+  // Admin can manage all master data
+  const canManageUsers = isAdmin;
+  const canManageCompanies = isAdmin;
+  const canManageLocations = isAdmin || roles.includes("it");
+  const canManageVendors = isAdmin || roles.includes("it");
+  const canManageCategories = isAdmin || roles.includes("it");
+  const canManageLicenses = isAdmin || roles.includes("it");
+  const canManageOrganisation = isAdmin;
+  const canManageDepartments = isAdmin || roles.includes("hr");
+  const canManageDesignations = isAdmin || roles.includes("hr");
+  const canManageAssetTypes = isAdmin || roles.includes("it");
 
   return (
     <Ctx.Provider value={{
       user, session, profile, roles, loading, isAdmin, canWrite, canEditEmployees,
+      canDelete, canManageUsers, canManageCompanies, canManageLocations, 
+      canManageVendors, canManageCategories, canManageLicenses, canManageOrganisation,
+      canManageDepartments, canManageDesignations, canManageAssetTypes, isFullAdmin,
       signOut: async () => {
         const rateLimitKey = user?.email || 'anonymous';
         const { allowed } = authRateLimiter.isAllowed(`signout-${rateLimitKey}`);

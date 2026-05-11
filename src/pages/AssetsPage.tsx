@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
-import { useAssets, useEmployees, useLocations, useVendors, useCategories, useCompanies, useDepartments, useCreateAsset, useUpdateAsset } from "@/hooks/useSupabaseData";
+import { useAssets, useEmployees, useLocations, useVendors, useCategories, useCompanies, useDepartments, useCreateAsset, useUpdateAsset, useDeleteAsset } from "@/hooks/useSupabaseData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Package, ChevronDown, ChevronUp, Plus, Loader2, Filter, X, Eye, Download, UserCheck, UserX, ArrowRightLeft } from "lucide-react";
+import { Search, Package, ChevronDown, ChevronUp, Plus, Loader2, Filter, X, Eye, Download, UserCheck, UserX, ArrowRightLeft, Trash2, AlertTriangle } from "lucide-react";
 import { exportAssetReport } from "@/lib/pdf";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -98,7 +98,9 @@ export default function AssetsPage() {
   const { data: departments } = useDepartments();
   const createAsset = useCreateAsset();
   const navigate = useNavigate();
-  const { canWrite } = useAuth();
+  const { canWrite, isAdmin, canDelete } = useAuth();
+  const deleteAsset = useDeleteAsset();
+  const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [allocAsset, setAllocAsset] = useState<any | null>(null);
   const [allocMode, setAllocMode] = useState<"allocation" | "return" | "transfer">("allocation");
 
@@ -531,6 +533,24 @@ export default function AssetsPage() {
                         <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/assets/${asset.id}`)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
+                        {(isAdmin || canDelete) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirm(asset);
+                                }}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete</TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -552,6 +572,52 @@ export default function AssetsPage() {
           defaultMode={allocMode}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Asset
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to delete this asset? This action cannot be undone.
+            </p>
+            {deleteConfirm && (
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="font-mono text-accent font-semibold">{deleteConfirm.sap_code}</p>
+                <p className="font-medium">{deleteConfirm.name}</p>
+                <p className="text-muted-foreground">Bin Card #{deleteConfirm.bin_card_no}</p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={async () => {
+                if (deleteConfirm) {
+                  try {
+                    await deleteAsset.mutateAsync(deleteConfirm.id);
+                    toast({ title: "Deleted", description: `Asset ${deleteConfirm.sap_code} has been deleted` });
+                    setDeleteConfirm(null);
+                  } catch (err: any) {
+                    toast({ title: "Error", description: err.message, variant: "destructive" });
+                  }
+                }
+              }}
+              disabled={deleteAsset.isPending}
+            >
+              {deleteAsset.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BulkActionsBar
         selected={filtered.filter((a: any) => selectedIds.has(a.id))}

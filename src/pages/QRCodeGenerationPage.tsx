@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState } from "react";
 import { useAssets } from "@/hooks/useSupabaseData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -92,20 +92,19 @@ export default function QRCodeGenerationPage() {
   };
 
   const generateQRCode = async (asset: any): Promise<QRCodeData> => {
+    // Deterministic payload — don't include a timestamp, otherwise the same
+    // asset gets a different QR every time you regenerate and printed
+    // labels stop matching scans of newly-generated ones.
     const qrData = JSON.stringify({
       id: asset.id,
       sapCode: asset.sap_code,
       type: "asset",
-      timestamp: new Date().toISOString()
     });
-    
+
     const qrDataUrl = await QRCode.toDataURL(qrData, {
       width: 300,
       margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
-      }
+      color: { dark: "#000000", light: "#FFFFFF" },
     });
 
     return {
@@ -113,7 +112,7 @@ export default function QRCodeGenerationPage() {
       sapCode: asset.sap_code,
       name: asset.name,
       qrDataUrl,
-      binCardNo: asset.bin_card_no
+      binCardNo: asset.bin_card_no,
     };
   };
 
@@ -159,54 +158,71 @@ export default function QRCodeGenerationPage() {
   };
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    if (printWindow && printRef.current) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>QR Codes - Asset Harmony</title>
-            <style>
-              @page { size: A4; margin: 10mm; }
-              body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-              .print-container { display: grid; gap: 10mm; padding: 10mm; }
-              .qr-item { 
-                border: 1px solid #ddd; 
-                padding: 8mm; 
-                text-align: center;
-                page-break-inside: avoid;
-              }
-              .qr-item img { max-width: 100%; height: auto; }
-              .qr-info { margin-top: 5mm; font-size: 10pt; }
-              .qr-sap { font-weight: bold; font-family: monospace; color: #0066cc; }
-              .qr-name { font-size: 9pt; margin-top: 2mm; }
-              .qr-bincard { font-size: 8pt; color: #666; margin-top: 1mm; }
-              .format-24 { grid-template-columns: repeat(4, 1fr); }
-              .format-12 { grid-template-columns: repeat(3, 1fr); }
-              .format-single { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
-              @media print {
-                .no-print { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="print-container format-${printFormat.replace("-", "-")}">
-              ${generatedQRCodes.map(qr => `
-                <div class="qr-item">
-                  <img src="${qr.qrDataUrl}" alt="QR Code" />
-                  <div class="qr-info">
-                    <div class="qr-sap">${qr.sapCode}</div>
-                    <div class="qr-name">${qr.name}</div>
-                    <div class="qr-bincard">Bin Card #${qr.binCardNo}</div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
+    if (generatedQRCodes.length === 0) {
+      toast({ title: "No QR codes", description: "Generate QR codes first", variant: "destructive" });
+      return;
     }
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) return;
+
+    // Map UI format → real CSS class name. The old `.replace("-", "-")`
+    // was a no-op that produced class names like 'format-a4-24' which
+    // didn't match the stylesheet, so QRs printed in one column.
+    const formatClass =
+      printFormat === "a4-24"  ? "format-24"  :
+      printFormat === "a4-12"  ? "format-12"  :
+      "format-single";
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>QR Codes - Asset Harmony</title>
+          <style>
+            @page { size: A4; margin: 10mm; }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+            .print-container { display: grid; gap: 6mm; padding: 6mm; }
+            .qr-item {
+              border: 1px solid #ddd;
+              padding: 6mm;
+              text-align: center;
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            .qr-item img { max-width: 100%; height: auto; }
+            .qr-info { margin-top: 4mm; font-size: 10pt; }
+            .qr-sap { font-weight: bold; font-family: monospace; color: #0066cc; }
+            .qr-name { font-size: 9pt; margin-top: 2mm; }
+            .qr-bincard { font-size: 8pt; color: #666; margin-top: 1mm; }
+            .format-24 { grid-template-columns: repeat(4, 1fr); }
+            .format-12 { grid-template-columns: repeat(3, 1fr); }
+            .format-single {
+              grid-template-columns: 1fr;
+              max-width: 400px;
+              margin: 0 auto;
+            }
+            .format-single .qr-item { page-break-after: always; }
+            .format-single .qr-item:last-child { page-break-after: auto; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="print-container ${formatClass}">
+            ${generatedQRCodes.map(qr => `
+              <div class="qr-item">
+                <img src="${qr.qrDataUrl}" alt="QR Code" />
+                <div class="qr-info">
+                  <div class="qr-sap">${qr.sapCode}</div>
+                  <div class="qr-name">${qr.name}</div>
+                  <div class="qr-bincard">Bin Card #${qr.binCardNo}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <script>window.addEventListener("load", () => { window.print(); });</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleDownloadAll = async () => {
@@ -498,7 +514,28 @@ export default function QRCodeGenerationPage() {
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    <Button onClick={() => window.print()}>
+                    <Button onClick={() => {
+                      // Print only the QR — calling window.print() on the
+                      // main window would print the whole app underneath.
+                      const w = window.open("", "_blank", "noopener,noreferrer");
+                      if (!w) return;
+                      w.document.write(`<!doctype html><html><head><title>QR ${previewAsset.sap_code}</title>
+                        <style>
+                          @page { size: A4; margin: 20mm; }
+                          body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+                          img { width: 300px; height: 300px; }
+                          .sap { font-family: monospace; font-weight: bold; color: #0066cc; font-size: 18pt; margin-top: 20px; }
+                          .name { font-size: 12pt; margin-top: 8px; }
+                          .bincard { font-size: 10pt; color: #666; margin-top: 4px; }
+                        </style></head><body>
+                        <img src="${previewAsset.qrDataUrl}" alt="QR" />
+                        <div class="sap">${previewAsset.sap_code}</div>
+                        <div class="name">${previewAsset.name}</div>
+                        <div class="bincard">Bin Card #${previewAsset.bin_card_no}</div>
+                        <script>window.addEventListener("load", () => { window.print(); });</script>
+                        </body></html>`);
+                      w.document.close();
+                    }}>
                       <Printer className="h-4 w-4 mr-2" />
                       Print
                     </Button>
