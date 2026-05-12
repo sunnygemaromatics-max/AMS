@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Package, ChevronDown, ChevronUp, Plus, Loader2, Filter, X, Eye, Download, UserCheck, UserX, ArrowRightLeft, Trash2, AlertTriangle } from "lucide-react";
+import { Search, Package, ChevronDown, ChevronUp, Plus, Loader2, Filter, X, Eye, Download, UserCheck, UserX, ArrowRightLeft, Trash2, AlertTriangle, Pencil } from "lucide-react";
 import { exportAssetReport } from "@/lib/pdf";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -97,10 +97,12 @@ export default function AssetsPage() {
   const { data: companies } = useCompanies();
   const { data: departments } = useDepartments();
   const createAsset = useCreateAsset();
+  const updateAsset = useUpdateAsset();
   const navigate = useNavigate();
   const { canWrite, isAdmin, canDelete } = useAuth();
   const deleteAsset = useDeleteAsset();
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+  const [editing, setEditing] = useState<any>(null);
   const [allocAsset, setAllocAsset] = useState<any | null>(null);
   const [allocMode, setAllocMode] = useState<"allocation" | "return" | "transfer">("allocation");
 
@@ -201,6 +203,74 @@ export default function AssetsPage() {
     }
   };
 
+  const openEdit = (asset: any) => {
+    setEditing(asset);
+    setForm({
+      sap_code:            asset.sap_code ?? '',
+      name:                asset.name ?? '',
+      bin_card_no:         asset.bin_card_no ?? 0,
+      system_info:         asset.system_info ?? '',
+      serial_number:       asset.serial_number ?? '',
+      brand:               asset.brand ?? '',
+      model:               asset.model ?? '',
+      purchase_date:       asset.purchase_date ?? '',
+      purchase_bill_no:    asset.purchase_bill_no ?? '',
+      purchase_cost:       asset.purchase_cost != null ? String(asset.purchase_cost) : '',
+      vendor_id:           asset.vendor_id ?? '',
+      category_id:         asset.category_id ?? '',
+      current_location_id: asset.current_location_id ?? '',
+      current_employee_id: asset.current_employee_id ?? '',
+      company_id:          asset.company_id ?? '',
+      department_id:       asset.department_id ?? '',
+      status:              asset.status ?? 'available',
+      notes:               asset.notes ?? '',
+      warranty_start:      asset.warranty_start ?? '',
+      warranty_end:        asset.warranty_end ?? '',
+      asset_subtype:       asset.asset_subtype ?? 'other',
+      imei:                asset.imei ?? '',
+      imei2:               asset.imei2 ?? '',
+      mobile_number:       asset.mobile_number ?? '',
+      sim_provider:        asset.sim_provider ?? '',
+      license_key:         asset.license_key ?? '',
+      specifications:      asset.specifications ?? '',
+    });
+    setShowCreate(true);  // re-use the create dialog
+  };
+
+  const handleSubmit = async () => {
+    if (!editing) return handleCreate();
+    // UPDATE
+    if (!form.sap_code || !form.name || !form.bin_card_no) {
+      toast({ title: "Error", description: "SAP Code, Name, and Bin Card No. are required", variant: "destructive" });
+      return;
+    }
+    try {
+      await updateAsset.mutateAsync({
+        id: editing.id,
+        sap_code: form.sap_code, name: form.name, bin_card_no: form.bin_card_no,
+        system_info: form.system_info || null, serial_number: form.serial_number || null,
+        brand: form.brand || null, model: form.model || null,
+        purchase_date: form.purchase_date || null, purchase_bill_no: form.purchase_bill_no || null,
+        purchase_cost: form.purchase_cost ? parseFloat(form.purchase_cost) : null,
+        vendor_id: form.vendor_id || null, category_id: form.category_id || null,
+        current_location_id: form.current_location_id || null, current_employee_id: form.current_employee_id || null,
+        company_id: form.company_id || null, department_id: form.department_id || null,
+        status: form.status, notes: form.notes || null,
+        warranty_start: form.warranty_start || null, warranty_end: form.warranty_end || null,
+        asset_subtype: form.asset_subtype || 'other',
+        imei: form.imei || null, imei2: form.imei2 || null,
+        mobile_number: form.mobile_number || null, sim_provider: form.sim_provider || null,
+        license_key: form.license_key || null, specifications: form.specifications || null,
+      });
+      toast({ title: "Updated", description: `${form.sap_code} updated` });
+      setShowCreate(false);
+      setEditing(null);
+      setForm(initialForm);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
   return (
@@ -214,12 +284,12 @@ export default function AssetsPage() {
           <Button variant="outline" onClick={() => exportAssetReport(filtered)}>
             <Download className="h-4 w-4 mr-1" /> Export PDF
           </Button>
-          <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) { setEditing(null); setForm(initialForm); } }}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-1" /> Add Asset</Button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Create New Asset</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? `Edit Asset — ${editing.sap_code}` : "Create New Asset"}</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="col-span-2">
                 <Label>Asset Type *</Label>
@@ -299,8 +369,10 @@ export default function AssetsPage() {
               <div className="col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
             </div>
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={createAsset.isPending}>{createAsset.isPending ? 'Creating...' : 'Create Asset'}</Button>
+              <Button variant="outline" onClick={() => { setShowCreate(false); setEditing(null); setForm(initialForm); }}>Cancel</Button>
+              <Button onClick={handleSubmit} disabled={createAsset.isPending || updateAsset.isPending}>
+                {(createAsset.isPending || updateAsset.isPending) ? 'Saving...' : (editing ? 'Save Changes' : 'Create Asset')}
+              </Button>
             </div>
           </DialogContent>
           </Dialog>
@@ -530,9 +602,29 @@ export default function AssetsPage() {
                             </Tooltip>
                           </>
                         )}
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/assets/${asset.id}`)}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => navigate(`/assets/${asset.id}`)}>
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>View</TooltipContent>
+                        </Tooltip>
+                        {(isAdmin || canWrite) && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={(e) => { e.stopPropagation(); openEdit(asset); }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Edit</TooltipContent>
+                          </Tooltip>
+                        )}
                         {(isAdmin || canDelete) && (
                           <Tooltip>
                             <TooltipTrigger asChild>
