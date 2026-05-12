@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut, isAdmin } = useAuth();
 
   if (loading) return <div className="min-h-screen grid place-items-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!user) return <Navigate to="/auth" replace />;
 
-  if (!profile || profile.approval_status === "pending") {
+  // Admin bypasses the approval gate — owner's own account should never get
+  // locked out by approval_status.
+  if (!isAdmin && (!profile || profile.approval_status === "pending")) {
     return (
       <div className="min-h-screen grid place-items-center bg-muted p-4">
         <Card className="w-full max-w-md">
@@ -27,7 +29,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (profile.approval_status === "rejected") {
+  if (!isAdmin && profile?.approval_status === "rejected") {
     return (
       <div className="min-h-screen grid place-items-center bg-muted p-4">
         <Card className="w-full max-w-md">

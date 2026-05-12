@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
-import { useLicenses, useCreateLicense, useEmployees, useCompanies, useLocations } from "@/hooks/useSupabaseData";
+import { useLicenses, useCreateLicense, useUpdateLicense, useDeleteLicense, useEmployees, useCompanies, useLocations } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Loader2, Key, Mail, Shield, Monitor } from "lucide-react";
+import { Search, Plus, Loader2, Key, Mail, Shield, Monitor, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -24,21 +26,29 @@ const statusColors: Record<string, string> = {
   revoked: 'bg-muted text-muted-foreground',
 };
 
+const EMPTY_LICENSE = {
+  license_type: 'email', license_key: '', product_name: '', email_id: '', domain: '',
+  sap_user_id: '', sap_license_type: '', validity_start: '', validity_end: '',
+  max_users: '', assigned_employee_id: '', company_id: '', location_id: '', notes: '',
+};
+
 export default function LicensesPage() {
   const { data: licenses, isLoading } = useLicenses();
   const { data: employees } = useEmployees();
   const { data: companies } = useCompanies();
   const { data: locations } = useLocations();
   const createLicense = useCreateLicense();
+  const updateLicense = useUpdateLicense();
+  const deleteLicense = useDeleteLicense();
+  const { isAdmin, canManageLicenses } = useAuth();
+  const canEdit = isAdmin || canManageLicenses;
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({
-    license_type: 'email', license_key: '', product_name: '', email_id: '', domain: '',
-    sap_user_id: '', sap_license_type: '', validity_start: '', validity_end: '',
-    max_users: '', assigned_employee_id: '', company_id: '', location_id: '', notes: '',
-  });
+  const [editing, setEditing] = useState<any>(null);
+  const [confirmDelete, setConfirmDelete] = useState<any>(null);
+  const [form, setForm] = useState(EMPTY_LICENSE);
 
   const filtered = useMemo(() => {
     return (licenses || []).filter((l: any) => {
@@ -49,27 +59,73 @@ export default function LicensesPage() {
     });
   }, [licenses, search, typeFilter]);
 
+  const buildPayload = () => ({
+    license_type: form.license_type,
+    license_key: form.license_key || null,
+    product_name: form.product_name || null,
+    email_id: form.email_id || null,
+    domain: form.domain || null,
+    sap_user_id: form.sap_user_id || null,
+    sap_license_type: form.sap_license_type || null,
+    validity_start: form.validity_start || null,
+    validity_end: form.validity_end || null,
+    max_users: form.max_users ? parseInt(form.max_users) : null,
+    assigned_employee_id: form.assigned_employee_id || null,
+    company_id: form.company_id || null,
+    location_id: form.location_id || null,
+    notes: form.notes || null,
+  });
+
   const handleCreate = async () => {
     if (!form.license_type) { toast({ title: "Error", description: "License type required", variant: "destructive" }); return; }
     try {
-      await createLicense.mutateAsync({
-        license_type: form.license_type,
-        license_key: form.license_key || null,
-        product_name: form.product_name || null,
-        email_id: form.email_id || null,
-        domain: form.domain || null,
-        sap_user_id: form.sap_user_id || null,
-        sap_license_type: form.sap_license_type || null,
-        validity_start: form.validity_start || null,
-        validity_end: form.validity_end || null,
-        max_users: form.max_users ? parseInt(form.max_users) : null,
-        assigned_employee_id: form.assigned_employee_id || null,
-        company_id: form.company_id || null,
-        location_id: form.location_id || null,
-        notes: form.notes || null,
-      });
+      await createLicense.mutateAsync(buildPayload());
       toast({ title: "Success", description: "License created" });
       setShowCreate(false);
+      setForm(EMPTY_LICENSE);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const openEdit = (l: any) => {
+    setEditing(l);
+    setForm({
+      license_type: l.license_type ?? 'email',
+      license_key:  l.license_key ?? '',
+      product_name: l.product_name ?? '',
+      email_id:     l.email_id ?? '',
+      domain:       l.domain ?? '',
+      sap_user_id:  l.sap_user_id ?? '',
+      sap_license_type: l.sap_license_type ?? '',
+      validity_start: l.validity_start ?? '',
+      validity_end:   l.validity_end ?? '',
+      max_users: l.max_users != null ? String(l.max_users) : '',
+      assigned_employee_id: l.assigned_employee_id ?? '',
+      company_id: l.company_id ?? '',
+      location_id: l.location_id ?? '',
+      notes: l.notes ?? '',
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editing) return;
+    try {
+      await updateLicense.mutateAsync({ id: editing.id, ...buildPayload() });
+      toast({ title: "Updated", description: "License updated" });
+      setEditing(null);
+      setForm(EMPTY_LICENSE);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      await deleteLicense.mutateAsync(confirmDelete.id);
+      toast({ title: "Deleted", description: "License removed" });
+      setConfirmDelete(null);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -124,7 +180,11 @@ export default function LicensesPage() {
           <p className="text-muted-foreground text-sm">{filtered.length} licenses tracked</p>
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> Add License</Button></DialogTrigger>
+          {canEdit && (
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1" /> Add License</Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Add License / Account</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -200,6 +260,7 @@ export default function LicensesPage() {
                   <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase">Location</th>
                   <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase">Validity</th>
                   <th className="text-left py-3 px-3 text-xs font-medium text-muted-foreground uppercase">Status</th>
+                  {canEdit && <th className="text-right py-3 px-3 text-xs font-medium text-muted-foreground uppercase">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -214,14 +275,89 @@ export default function LicensesPage() {
                     <td className="py-3 px-3">
                       <Badge variant="outline" className={`text-[10px] ${statusColors[l.status] || ''}`}>{l.status}</Badge>
                     </td>
+                    {canEdit && (
+                      <td className="py-3 px-3">
+                        <div className="flex justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(l)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => setConfirmDelete(l)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
-                {filtered.length === 0 && <tr><td colSpan={7} className="py-12 text-center text-muted-foreground">No licenses found.</td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={canEdit ? 8 : 7} className="py-12 text-center text-muted-foreground">No licenses found.</td></tr>}
               </tbody>
             </table>
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit License Dialog — reuses the create form */}
+      <Dialog open={!!editing} onOpenChange={(open) => { if (!open) { setEditing(null); setForm(EMPTY_LICENSE); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Edit License</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <Label>Type</Label>
+              <Select value={form.license_type} onValueChange={v => setForm(f => ({ ...f, license_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {LICENSE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>License Key</Label><Input value={form.license_key} onChange={e => setForm(f => ({ ...f, license_key: e.target.value }))} /></div>
+            <div><Label>Product Name</Label><Input value={form.product_name} onChange={e => setForm(f => ({ ...f, product_name: e.target.value }))} /></div>
+            <div><Label>Email ID</Label><Input value={form.email_id} onChange={e => setForm(f => ({ ...f, email_id: e.target.value }))} /></div>
+            <div><Label>Domain</Label><Input value={form.domain} onChange={e => setForm(f => ({ ...f, domain: e.target.value }))} /></div>
+            <div><Label>Validity Start</Label><Input type="date" value={form.validity_start} onChange={e => setForm(f => ({ ...f, validity_start: e.target.value }))} /></div>
+            <div><Label>Validity End</Label><Input type="date" value={form.validity_end} onChange={e => setForm(f => ({ ...f, validity_end: e.target.value }))} /></div>
+            <div className="col-span-2">
+              <Label>Assigned to</Label>
+              <Select value={form.assigned_employee_id || "none"} onValueChange={v => setForm(f => ({ ...f, assigned_employee_id: v === "none" ? "" : v }))}>
+                <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {(employees ?? []).map((e: any) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => { setEditing(null); setForm(EMPTY_LICENSE); }}>Cancel</Button>
+            <Button onClick={handleUpdate} disabled={updateLicense.isPending}>
+              {updateLicense.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirm */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this license?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.email_id || confirmDelete?.product_name || confirmDelete?.license_key || "This record"} will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

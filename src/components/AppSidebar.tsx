@@ -10,6 +10,7 @@ import {
   Upload,
   History,
   Shield,
+  ShieldCheck,
   Briefcase,
   Activity,
   BarChart3,
@@ -59,6 +60,7 @@ const systemNav = [
 
 const adminNav = [
   { title: "Users & Roles", url: "/users", icon: Shield },
+  { title: "Rules & Permissions", url: "/rules", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {

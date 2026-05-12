@@ -94,27 +94,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const isAdmin = roles.includes("admin");
-  const isApproved = profile?.approval_status === "approved";
-  
+
+  // ⚠ Admin bypasses the approval gate entirely. Whatever the DB says, an
+  // admin is treated as approved so they never see the 'Awaiting approval'
+  // screen and never lose write/manage permissions because of it.
+  const isApproved = isAdmin || profile?.approval_status === "approved";
+
   // Admin has FULL access to everything
   const isFullAdmin = isAdmin;
-  const canWrite = isApproved && (isAdmin || roles.includes("it"));
-  const canEditEmployees = isApproved && (isAdmin || roles.includes("it") || roles.includes("hr"));
-  
+  const canWrite          = isApproved && (isAdmin || roles.includes("it"));
+  const canEditEmployees  = isApproved && (isAdmin || roles.includes("it") || roles.includes("hr"));
+
   // Admin can delete any record
   const canDelete = isAdmin;
-  
+
   // Admin can manage all master data
-  const canManageUsers = isAdmin;
-  const canManageCompanies = isAdmin;
-  const canManageLocations = isAdmin || roles.includes("it");
-  const canManageVendors = isAdmin || roles.includes("it");
-  const canManageCategories = isAdmin || roles.includes("it");
-  const canManageLicenses = isAdmin || roles.includes("it");
+  const canManageUsers        = isAdmin;
+  const canManageCompanies    = isAdmin;
+  const canManageLocations    = isAdmin || roles.includes("it");
+  const canManageVendors      = isAdmin || roles.includes("it");
+  const canManageCategories   = isAdmin || roles.includes("it");
+  const canManageLicenses     = isAdmin || roles.includes("it");
   const canManageOrganisation = isAdmin;
-  const canManageDepartments = isAdmin || roles.includes("hr");
+  const canManageDepartments  = isAdmin || roles.includes("hr");
   const canManageDesignations = isAdmin || roles.includes("hr");
-  const canManageAssetTypes = isAdmin || roles.includes("it");
+  const canManageAssetTypes   = isAdmin || roles.includes("it");
 
   return (
     <Ctx.Provider value={{

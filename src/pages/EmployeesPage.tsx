@@ -1,15 +1,20 @@
 import { useState, useMemo } from "react";
 import {
   useEmployees, useLocations, useCompanies, useDepartments,
-  useCreateEmployee, useAssets,
+  useCreateEmployee, useUpdateEmployee, useDeactivateEmployee, useAssets,
 } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, User, Package, Plus, Loader2, Eye, ChevronDown } from "lucide-react";
+import { Search, User, Package, Plus, Loader2, Eye, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -75,7 +80,11 @@ export default function EmployeesPage() {
   const { data: companies }            = useCompanies();
   const { data: departments }          = useDepartments();
   const createEmployee                 = useCreateEmployee();
+  const updateEmployee                 = useUpdateEmployee();
+  const deactivateEmployee             = useDeactivateEmployee();
   const navigate                       = useNavigate();
+  const { isAdmin, canEditEmployees }  = useAuth();
+  const canEdit = isAdmin || canEditEmployees;
 
   const [search, setSearch]               = useState("");
   const [deptFilter, setDeptFilter]       = useState("all");
@@ -83,6 +92,8 @@ export default function EmployeesPage() {
   const [typeFilter, setTypeFilter]       = useState("all");
   const [selected, setSelected]           = useState<string | null>(null);
   const [showCreate, setShowCreate]       = useState(false);
+  const [editing, setEditing]             = useState<any>(null);
+  const [confirmDelete, setConfirmDelete] = useState<any>(null);
   const [form, setForm]                   = useState<FormState>(EMPTY_FORM);
   const [showAdvanced, setShowAdvanced]   = useState(false);
 
@@ -166,6 +177,86 @@ export default function EmployeesPage() {
     }
   };
 
+  const openEdit = (emp: any) => {
+    setEditing(emp);
+    setForm({
+      employee_code:     emp.employee_code ?? "",
+      name:              emp.name ?? "",
+      department:        emp.department ?? "",
+      designation:       emp.designation ?? "",
+      role:              emp.role ?? "",
+      reporting_manager: emp.reporting_manager ?? "",
+      employee_type:     emp.employee_type ?? "full_time",
+      email:             emp.email ?? "",
+      phone:             emp.phone ?? "",
+      emergency_contact: emp.emergency_contact ?? "",
+      secondary_email:   emp.secondary_email ?? "",
+      location_id:       emp.location_id ?? "",
+      company_id:        emp.company_id ?? "",
+      department_id:     emp.department_id ?? "",
+      work_location:     emp.work_location ?? "",
+      access_level:      emp.access_level ?? "standard",
+      is_active:         emp.is_active ?? true,
+      date_of_joining:   emp.date_of_joining ?? "",
+    });
+    setShowCreate(true);  // re-use the create dialog
+  };
+
+  const handleSubmit = async () => {
+    if (editing) {
+      // UPDATE
+      if (!form.employee_code || !form.name || !form.department) {
+        toast({ title: "Required fields missing", description: "Employee Code, Name, and Department are required.", variant: "destructive" });
+        return;
+      }
+      try {
+        await updateEmployee.mutateAsync({
+          id: editing.id,
+          employee_code: form.employee_code.trim(),
+          name:          form.name.trim(),
+          department:    form.department.trim(),
+          role:          form.role || null,
+          email:         form.email || null,
+          phone:         form.phone || null,
+          location_id:   form.location_id || null,
+          company_id:    form.company_id || null,
+          department_id: form.department_id || null,
+          designation:   form.designation || null,
+          ...({
+            employee_type:     form.employee_type || "full_time",
+            reporting_manager: form.reporting_manager || null,
+            access_level:      form.access_level || "standard",
+            emergency_contact: form.emergency_contact || null,
+            secondary_email:   form.secondary_email || null,
+            work_location:     form.work_location || null,
+            date_of_joining:   form.date_of_joining || null,
+            is_active:         form.is_active,
+          } as any),
+        });
+        toast({ title: "Updated", description: `${form.name} has been updated.` });
+        setShowCreate(false);
+        setEditing(null);
+        setForm(EMPTY_FORM);
+        setShowAdvanced(false);
+      } catch (err: any) {
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } else {
+      await handleCreate();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      await deactivateEmployee.mutateAsync(confirmDelete.id);
+      toast({ title: "Deactivated", description: `${confirmDelete.name} has been deactivated.` });
+      setConfirmDelete(null);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   if (isLoading)
     return (
       <div className="flex items-center justify-center h-64">
@@ -185,14 +276,16 @@ export default function EmployeesPage() {
           </p>
         </div>
 
-        <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) { setForm(EMPTY_FORM); setShowAdvanced(false); } }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-1" /> Add Employee</Button>
-          </DialogTrigger>
+        <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) { setForm(EMPTY_FORM); setShowAdvanced(false); setEditing(null); } }}>
+          {canEdit && (
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1" /> Add Employee</Button>
+            </DialogTrigger>
+          )}
 
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add Employee</DialogTitle>
+              <DialogTitle>{editing ? `Edit Employee — ${editing.name}` : "Add Employee"}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6 pt-2">
@@ -395,12 +488,12 @@ export default function EmployeesPage() {
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); setShowAdvanced(false); }}>
+              <Button variant="outline" onClick={() => { setShowCreate(false); setForm(EMPTY_FORM); setShowAdvanced(false); setEditing(null); }}>
                 Cancel
               </Button>
-              <Button onClick={handleCreate} disabled={createEmployee.isPending}>
-                {createEmployee.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Add Employee
+              <Button onClick={handleSubmit} disabled={createEmployee.isPending || updateEmployee.isPending}>
+                {(createEmployee.isPending || updateEmployee.isPending) ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {editing ? "Save Changes" : "Add Employee"}
               </Button>
             </div>
           </DialogContent>
@@ -453,9 +546,31 @@ export default function EmployeesPage() {
           return (
             <Card
               key={emp.id}
-              className="cursor-pointer hover:border-accent/50 transition-colors"
+              className="cursor-pointer hover:border-accent/50 transition-colors group relative"
               onClick={() => setSelected(emp.id)}
             >
+              {canEdit && (
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 bg-background/80 backdrop-blur-sm"
+                    onClick={(e) => { e.stopPropagation(); openEdit(emp); }}
+                    title="Edit"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-destructive"
+                    onClick={(e) => { e.stopPropagation(); setConfirmDelete(emp); }}
+                    title="Deactivate"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -598,6 +713,28 @@ export default function EmployeesPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Deactivate confirm */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate {confirmDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The employee will be marked inactive and hidden from default lists. Their historical asset
+              records remain intact and can be restored later by an admin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
