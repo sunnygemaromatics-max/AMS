@@ -81,6 +81,14 @@ $$;
 -- ─── 4. ADD organisation_id TO EVERY DOMAIN TABLE ───────────────────────
 -- Each ALTER is idempotent. If the table doesn't exist (e.g. fresh install
 -- where one of the other SETUP scripts hasn't been run), the DO block skips it.
+--
+-- IMPORTANT: we DISABLE USER triggers around the backfill UPDATE. Reason:
+-- some installs have legacy audit triggers (e.g. trg_audit_employees) that
+-- reference an OLDER audit_log schema. A blanket UPDATE would fire those
+-- triggers and crash with "column entity_type does not exist". Disabling
+-- USER triggers temporarily lets us backfill organisation_id cleanly without
+-- waking up unrelated legacy machinery. FK / constraint triggers are not
+-- affected (those are SYSTEM triggers, not USER).
 
 DO $$
 DECLARE
@@ -93,14 +101,32 @@ DECLARE
 BEGIN
     FOREACH tbl IN ARRAY tables LOOP
         IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
+            -- 4a. Add the column if missing
             EXECUTE format(
                 'ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS organisation_id UUID REFERENCES public.organisations(id) ON DELETE CASCADE',
                 tbl
             );
-            EXECUTE format(
-                'UPDATE public.%I SET organisation_id = ''00000000-0000-0000-0000-000000000001'' WHERE organisation_id IS NULL',
-                tbl
-            );
+
+            -- 4b. Suspend user triggers for this table only
+            EXECUTE format('ALTER TABLE public.%I DISABLE TRIGGER USER', tbl);
+
+            -- 4c. Backfill — wrapped in BEGIN/EXCEPTION so a single bad row
+            -- in one table doesn't abort the whole migration. We always
+            -- re-enable triggers in the EXCEPTION branch.
+            BEGIN
+                EXECUTE format(
+                    'UPDATE public.%I SET organisation_id = ''00000000-0000-0000-0000-000000000001'' WHERE organisation_id IS NULL',
+                    tbl
+                );
+            EXCEPTION WHEN OTHERS THEN
+                EXECUTE format('ALTER TABLE public.%I ENABLE TRIGGER USER', tbl);
+                RAISE NOTICE 'Skipped backfill on %: %', tbl, SQLERRM;
+            END;
+
+            -- 4d. Re-enable user triggers
+            EXECUTE format('ALTER TABLE public.%I ENABLE TRIGGER USER', tbl);
+
+            -- 4e. Index on organisation_id for fast RLS-scoped queries
             EXECUTE format(
                 'CREATE INDEX IF NOT EXISTS idx_%I_org ON public.%I(organisation_id)',
                 tbl, tbl
@@ -230,4 +256,42 @@ END $$;
 --   current_org_id() picks the user's oldest membership. To let them switch,
 --   add a `current_org_id` claim to the auth JWT and replace the helper with:
 --     SELECT (auth.jwt() ->> 'current_org_id')::uuid;
+--
+-- ============================================================
+-- KNOWN PRE-EXISTING ISSUE — UNRELATED TO THIS MIGRATION
+-- ============================================================
+-- If this migration printed any NOTICE about "Skipped backfill on <table>",
+-- or you've ever seen the error:
+--
+--   "column "entity_type" of relation "audit_log" does not exist"
+--
+-- …then your database has audit triggers (e.g. trg_audit_employees,
+-- trg_audit_assets, ...) that were written for an OLDER audit_log schema
+-- with columns like entity_type / entity_code / actor_username. Your
+-- current audit_log table (created by SETUP_BIN_CARDS_SAFE.sql) uses a
+-- DIFFERENT schema: table_name / record_id / user_id / user_name / etc.
+--
+-- These two schemas conflict. As a result, those legacy audit triggers
+-- silently fail every time someone edits an employee/asset/etc. — your
+-- audit log has likely been EMPTY since whenever this drift happened.
+--
+-- TO DIAGNOSE — run these in the SQL Editor:
+--   SELECT tgname FROM pg_trigger
+--    WHERE tgname LIKE 'trg_audit%' AND NOT tgisinternal;
+--   SELECT column_name FROM information_schema.columns
+--    WHERE table_schema = 'public' AND table_name = 'audit_log'
+--    ORDER BY ordinal_position;
+--
+-- TO FIX (pick ONE):
+--   (a) Drop the broken triggers if you don't need audit logging right now:
+--         DROP FUNCTION IF EXISTS public.trg_audit_employees() CASCADE;
+--         DROP FUNCTION IF EXISTS public.trg_audit_assets()    CASCADE;
+--         -- (etc., one per offending trg_audit_* function)
+--   (b) Replace the audit_log table with the schema the triggers expect, OR
+--   (c) Rewrite the triggers to insert into the current audit_log schema.
+--
+-- Option (a) is the cleanest if you just want the app working now — the
+-- new reminder_activity table (from SETUP_CUSTOM_REMINDERS.sql) already
+-- captures all changes to reminders, which is the most important audit
+-- surface in this app.
 -- ============================================================
