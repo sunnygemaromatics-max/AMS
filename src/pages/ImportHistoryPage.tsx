@@ -34,7 +34,7 @@ interface Run {
   rolled_back_by: string | null;
 }
 
-export default function ImportHistoryPage() {
+export default function ImportHistoryPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user } = useAuth();
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,15 +127,17 @@ export default function ImportHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <History className="h-7 w-7" /> Import History
-          </h1>
-          <p className="text-muted-foreground">Past bulk imports with downloadable error reports and one-click rollback.</p>
+      {!embedded && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <History className="h-7 w-7" /> Import History
+            </h1>
+            <p className="text-muted-foreground">Past bulk imports with downloadable error reports and one-click rollback.</p>
+          </div>
+          <Button asChild variant="outline"><Link to="/import"><ArrowLeft className="h-4 w-4 mr-2" />Back to Import</Link></Button>
         </div>
-        <Button asChild variant="outline"><Link to="/import"><ArrowLeft className="h-4 w-4 mr-2" />Back to Import</Link></Button>
-      </div>
+      )}
 
       <Card>
         <CardHeader>

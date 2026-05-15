@@ -34,7 +34,7 @@ type Snapshot = {
   inserts: { table: string; id: string }[];
 };
 
-export default function BulkImportPage() {
+export default function BulkImportPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, profile } = useAuth();
   const [files, setFiles] = useState<ParsedFile[]>([]);
   const [parsing, setParsing] = useState(false);
@@ -349,13 +349,15 @@ export default function BulkImportPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Database className="h-7 w-7" /> Bulk Import</h1>
-          <p className="text-muted-foreground">Upload ZIP / Excel / CSV files. Auto-detects employees, assets, licenses, transfers.</p>
+      {!embedded && (
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2"><Database className="h-7 w-7" /> Bulk Import</h1>
+            <p className="text-muted-foreground">Upload ZIP / Excel / CSV files. Auto-detects employees, assets, licenses, transfers.</p>
+          </div>
+          <Button asChild variant="outline"><Link to="/import/history"><History className="h-4 w-4 mr-2" />Import History</Link></Button>
         </div>
-        <Button asChild variant="outline"><Link to="/import/history"><History className="h-4 w-4 mr-2" />Import History</Link></Button>
-      </div>
+      )}
 
       <Card>
         <CardHeader>

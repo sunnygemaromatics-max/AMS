@@ -1,14 +1,12 @@
-import { Package, Users, TrendingUp, Monitor, Loader2, AlertTriangle, LayoutDashboard, BellRing } from "lucide-react";
+import { Package, Users, TrendingUp, Monitor, Loader2, AlertTriangle } from "lucide-react";
 import { KpiCard } from "@/components/KpiCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardStats, useAssets, useLicenses } from "@/hooks/useSupabaseData";
 import { useNotifications } from "@/hooks/useNotifications";
 import { StatusBadge } from "@/components/StatusBadge";
-import { AlertsPanel } from "@/components/AlertsPanel";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 
@@ -32,10 +30,8 @@ export default function DashboardPage() {
   const { data: notifications = [] } = useNotifications(60);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") === "alerts" ? "alerts" : "overview";
 
-  // Lift the alert counts so the tab can show a badge
+  // Compact alerts summary card shown on the Overview — clicking it jumps to /alerts
   const alertCounts = useMemo(() => {
     const expired = notifications.filter((n) => n.severity === "expired").length;
     const critical = notifications.filter((n) => n.severity === "critical").length;
@@ -109,28 +105,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}>
-        <TabsList className="bg-card border border-border/60 p-1 h-auto">
-          <TabsTrigger value="overview" className="gap-2 px-4">
-            <LayoutDashboard className="h-3.5 w-3.5" /> {t("dashboard.overview")}
-          </TabsTrigger>
-          <TabsTrigger value="alerts" className="gap-2 px-4 relative">
-            <BellRing className="h-3.5 w-3.5" /> {t("dashboard.alerts")}
-            {alertCounts.urgent > 0 && (
-              <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-destructive/15 text-destructive border-destructive/30 tabular-nums">
-                {alertCounts.urgent}
-              </Badge>
-            )}
-            {alertCounts.urgent === 0 && alertCounts.total > 0 && (
-              <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-accent/15 text-accent border-accent/30 tabular-nums">
-                {alertCounts.total}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-5 space-y-6 focus-visible:outline-none">
-
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard title={t("dashboard.totalAssets")} value={total} subtitle={t("dashboard.allLocations")} icon={Package} gradient="kpi-gradient-1" />
@@ -139,10 +113,10 @@ export default function DashboardPage() {
         <KpiCard title={t("dashboard.totalValue")} value={`₹${(totalValue / 100000).toFixed(1)}L`} subtitle={`${stats?.licenseCount || 0} ${t("nav.licenses").toLowerCase()}`} icon={TrendingUp} gradient="kpi-gradient-4" />
       </div>
 
-      {/* Compact alerts strip in Overview — clicking jumps to the full Alerts tab */}
+      {/* Compact alerts strip — clicking jumps to the full Alerts page */}
       {alertCounts.total > 0 && (
         <Card
-          onClick={() => setSearchParams({ tab: "alerts" }, { replace: true })}
+          onClick={() => navigate("/alerts")}
           className="cursor-pointer border-warning/30 bg-warning/5 animate-fade-in-up stagger-2 hover:border-warning/50 transition-colors group"
         >
           <CardHeader className="pb-2">
@@ -158,7 +132,7 @@ export default function DashboardPage() {
                 )}
               </span>
               <span className="text-xs text-muted-foreground font-normal group-hover:text-warning transition-colors">
-                Open Alerts tab →
+                Open Alerts →
               </span>
             </CardTitle>
           </CardHeader>
@@ -306,12 +280,6 @@ export default function DashboardPage() {
           ) : <p className="text-muted-foreground text-sm text-center py-8">No assets yet.</p>}
         </CardContent>
       </Card>
-        </TabsContent>
-
-        <TabsContent value="alerts" className="mt-5 focus-visible:outline-none">
-          <AlertsPanel windowDays={60} />
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   Activity,
   BarChart3,
   QrCode,
+  BellRing,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -40,20 +41,20 @@ const mainNav = [
   { key: "assets", url: "/assets", icon: Package },
   { key: "binCards", url: "/bin-cards", icon: CreditCard },
   { key: "employees", url: "/employees", icon: Users },
-  { key: "locations", url: "/locations", icon: MapPin },
   { key: "licenses", url: "/licenses", icon: Key },
+  { key: "alerts", url: "/alerts", icon: BellRing },
 ];
 
 const dataNav = [
   { key: "reports", url: "/reports", icon: BarChart3 },
   { key: "import", url: "/import", icon: Upload },
-  { key: "importHistory", url: "/import/history", icon: History },
   { key: "activity", url: "/activity", icon: Activity },
   { key: "auditTrail", url: "/audit-trail", icon: History },
   { key: "qrCodes", url: "/qr-codes", icon: QrCode },
 ];
 
 const systemNav = [
+  { key: "locations", url: "/locations", icon: MapPin },
   { key: "companies", url: "/companies", icon: Building2 },
   { key: "organisation", url: "/organisation", icon: Briefcase },
   { key: "settings", url: "/settings", icon: Settings },

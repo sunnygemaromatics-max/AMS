@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,13 +26,13 @@ const LicensesPage = lazy(() => import("./pages/LicensesPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const OrganisationSettingsPage = lazy(() => import("./pages/OrganisationSettingsPage"));
 const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
-const BulkImportPage = lazy(() => import("./pages/BulkImportPage"));
-const ImportHistoryPage = lazy(() => import("./pages/ImportHistoryPage"));
+const ImportPage = lazy(() => import("./pages/ImportPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const ReportsPage = lazy(() => import("./pages/ReportsPage"));
 const AuditTrailPage = lazy(() => import("./pages/AuditTrailPage"));
 const QRCodeGenerationPage = lazy(() => import("./pages/QRCodeGenerationPage"));
 const RulesPage = lazy(() => import("./pages/RulesPage"));
+const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,8 +80,10 @@ const App = () => (
                           <Route path="/employees" element={<EmployeesPage />} />
                           <Route path="/locations" element={<LocationsPage />} />
                           <Route path="/licenses" element={<LicensesPage />} />
-                          <Route path="/import" element={<BulkImportPage />} />
-                          <Route path="/import/history" element={<ImportHistoryPage />} />
+                          <Route path="/alerts" element={<AlertsPage />} />
+                          <Route path="/import" element={<ImportPage />} />
+                          {/* Old deep-link kept working — redirects to the new merged page on the History tab */}
+                          <Route path="/import/history" element={<Navigate to="/import?tab=history" replace />} />
                           <Route path="/activity" element={<ActivityPage />} />
                           <Route path="/reports" element={<ReportsPage />} />
                           <Route path="/audit-trail" element={<AuditTrailPage />} />
