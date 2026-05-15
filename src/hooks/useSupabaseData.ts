@@ -56,14 +56,13 @@ function invalidate(qc: ReturnType<typeof useQueryClient>, ...keys: string[]) {
 
 // Embed selector that explicitly names the FK column so PostgREST never
 // has to guess — works even if multiple FKs exist between two tables.
-const ASSET_EMBED =
-  "*, " +
-  "employees:current_employee_id(name, employee_code, department), " +
-  "locations:current_location_id(name, code), " +
-  "vendors:vendor_id(name), " +
-  "categories:category_id(name, code), " +
-  "departments:department_id(name, code), " +
-  "companies:company_id(name)";
+const ASSET_EMBED = `*,
+  employees:current_employee_id(name, employee_code, department),
+  locations:current_location_id(name, code),
+  vendors:vendor_id(name),
+  categories:category_id(name, code),
+  departments:department_id(name, code),
+  companies:company_id(name)` as const;
 
 export function useAssets() {
   return useQuery({
@@ -139,12 +138,10 @@ export function useEmployees() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select(
-          "*, " +
-          "locations:location_id(name), " +
-          "companies:company_id(name), " +
-          "departments:department_id(name)"
-        )
+        .select(`*,
+          locations:location_id(name),
+          companies:company_id(name),
+          departments:department_id(name)`)
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
@@ -392,11 +389,9 @@ export function useDepartments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("departments")
-        .select(
-          "*, " +
-          "companies:company_id(name), " +
-          "locations:location_id(name)"
-        )
+        .select(`*,
+          companies:company_id(name),
+          locations:location_id(name)`)
         .eq("is_active", true)
         .order("name");
       if (error) throw error;
@@ -448,13 +443,11 @@ export function useLicenses() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("licenses")
-        .select(
-          "*, " +
-          "employees:assigned_employee_id(name, employee_code), " +
-          "assets:assigned_asset_id(sap_code, name), " +
-          "companies:company_id(name), " +
-          "locations:location_id(name)"
-        )
+        .select(`*,
+          employees:assigned_employee_id(name, employee_code),
+          assets:assigned_asset_id(sap_code, name),
+          companies:company_id(name),
+          locations:location_id(name)`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -520,7 +513,6 @@ export function useBinCardEntries(assetId?: string) {
   return useQuery({
     queryKey: ["bin_card_entries", assetId ?? "all"],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q = (supabase as any)
         .from("bin_card_entries")
         .select("*")
@@ -552,7 +544,6 @@ export function useCreateBinCardEntry() {
       created_by_name?: string | null;
       remarks?: string | null;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any).from("bin_card_entries").insert(entry);
       if (error) throw error;
     },
@@ -598,7 +589,6 @@ export function useAuditLogV2(filters: AuditLogV2Filters = {}) {
   return useQuery({
     queryKey: ["audit_log_v2", filters],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q = (supabase as any)
         .from("audit_log")
         .select("*")
@@ -633,12 +623,10 @@ export function useAssetTransactions(assetId?: string) {
       // BinCardsPage) but pin to the to_* FK so PostgREST never has to guess.
       let query = supabase
         .from("asset_transactions")
-        .select(
-          "*, " +
-          "assets:asset_id(sap_code, name), " +
-          "employees:to_employee_id(name), " +
-          "locations:to_location_id(name)"
-        )
+        .select(`*,
+          assets:asset_id(sap_code, name),
+          employees:to_employee_id(name),
+          locations:to_location_id(name)`)
         .order("created_at", { ascending: false });
       if (assetId) query = query.eq("asset_id", assetId);
       const { data, error } = await query.limit(100);
@@ -668,7 +656,6 @@ export function useOrgSettings() {
   return useQuery({
     queryKey: ["org_settings"],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("organization_settings")
         .select("*")
@@ -685,7 +672,6 @@ export function useUpdateOrgSettings() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<OrgSettings> & { id: string }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("organization_settings")
         .update(updates)
@@ -741,7 +727,6 @@ export function useAuditLog(filters: AuditFilters = {}) {
   return useQuery({
     queryKey: ["audit_log", filters],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let q = (supabase as any)
         .from("audit_log")
         .select("*")

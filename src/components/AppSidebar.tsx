@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { TsiLogo } from "@/components/TsiLogo";
 import {
@@ -35,37 +36,38 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainNav = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Assets", url: "/assets", icon: Package },
-  { title: "Bin Cards", url: "/bin-cards", icon: CreditCard },
-  { title: "Employees", url: "/employees", icon: Users },
-  { title: "Locations", url: "/locations", icon: MapPin },
-  { title: "Licenses", url: "/licenses", icon: Key },
+  { key: "dashboard", url: "/", icon: LayoutDashboard },
+  { key: "assets", url: "/assets", icon: Package },
+  { key: "binCards", url: "/bin-cards", icon: CreditCard },
+  { key: "employees", url: "/employees", icon: Users },
+  { key: "locations", url: "/locations", icon: MapPin },
+  { key: "licenses", url: "/licenses", icon: Key },
 ];
 
 const dataNav = [
-  { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "Bulk Import", url: "/import", icon: Upload },
-  { title: "Import History", url: "/import/history", icon: History },
-  { title: "Activity Timeline", url: "/activity", icon: Activity },
-  { title: "Audit Trail", url: "/audit-trail", icon: History },
-  { title: "QR Codes", url: "/qr-codes", icon: QrCode },
+  { key: "reports", url: "/reports", icon: BarChart3 },
+  { key: "import", url: "/import", icon: Upload },
+  { key: "importHistory", url: "/import/history", icon: History },
+  { key: "activity", url: "/activity", icon: Activity },
+  { key: "auditTrail", url: "/audit-trail", icon: History },
+  { key: "qrCodes", url: "/qr-codes", icon: QrCode },
 ];
 
 const systemNav = [
-  { title: "Companies", url: "/companies", icon: Building2 },
-  { title: "Organisation", url: "/organisation", icon: Briefcase },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { key: "companies", url: "/companies", icon: Building2 },
+  { key: "organisation", url: "/organisation", icon: Briefcase },
+  { key: "settings", url: "/settings", icon: Settings },
 ];
 
 const adminNav = [
-  { title: "Users & Roles", url: "/users", icon: Shield },
-  { title: "Rules & Permissions", url: "/rules", icon: ShieldCheck },
+  { key: "users", url: "/users", icon: Shield },
+  { key: "rules", url: "/rules", icon: ShieldCheck },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
   const collapsed = state === "collapsed";
   const location = useLocation();
 
@@ -100,11 +102,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink to={item.url} end={item.url === "/"} activeClassName="bg-primary/10 text-primary font-semibold">
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span>{t(`nav.${item.key}`)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -118,11 +120,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {dataNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink to={item.url} activeClassName="bg-primary/10 text-primary font-semibold">
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span>{t(`nav.${item.key}`)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -137,11 +139,11 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminNav.map((item) => (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.key}>
                     <SidebarMenuButton asChild isActive={isActive(item.url)}>
                       <NavLink to={item.url} activeClassName="bg-primary/10 text-primary font-semibold">
                         <item.icon className="h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span>{t(`nav.${item.key}`)}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -156,11 +158,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {systemNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink to={item.url} activeClassName="bg-primary/10 text-primary font-semibold">
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && <span>{t(`nav.${item.key}`)}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

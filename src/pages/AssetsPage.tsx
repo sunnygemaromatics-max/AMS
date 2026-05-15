@@ -14,10 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
+import { parseDbError } from "@/lib/supabase-error";
 import { useNavigate } from "react-router-dom";
 import { AllocationDialog } from "@/components/AllocationDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const STATUSES = ['available', 'allocated', 'under_maintenance', 'lost', 'damaged', 'scrapped'];
@@ -100,6 +102,7 @@ export default function AssetsPage() {
   const updateAsset = useUpdateAsset();
   const navigate = useNavigate();
   const { canWrite, isAdmin, canDelete } = useAuth();
+  const { t } = useTranslation();
   const deleteAsset = useDeleteAsset();
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
   const [editing, setEditing] = useState<any>(null);
@@ -133,7 +136,7 @@ export default function AssetsPage() {
   const activeFilterCount = [statusFilter, subtypeFilter, locationFilter, companyFilter, vendorFilter, employeeFilter].filter(f => f !== 'all').length;
 
   const filtered = useMemo(() => {
-    let result = (assets || []).filter((a: any) => {
+    const result = (assets || []).filter((a: any) => {
       const q = search.toLowerCase();
       const matchesSearch = !q ||
         a.sap_code?.toLowerCase().includes(q) ||
@@ -199,7 +202,7 @@ export default function AssetsPage() {
       setShowCreate(false);
       setForm(initialForm);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -267,7 +270,7 @@ export default function AssetsPage() {
       setEditing(null);
       setForm(initialForm);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -277,8 +280,8 @@ export default function AssetsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Assets Registry</h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} of {(assets || []).length} assets</p>
+          <h1 className="text-2xl font-bold">{t("pages.assetsTitle")}</h1>
+          <p className="text-muted-foreground text-sm">{filtered.length} / {(assets || []).length} {t("nav.assets").toLowerCase()}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportAssetReport(filtered)}>
@@ -286,7 +289,7 @@ export default function AssetsPage() {
           </Button>
           <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) { setEditing(null); setForm(initialForm); } }}>
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" /> Add Asset</Button>
+              <Button><Plus className="h-4 w-4 mr-1" /> {t("pages.addAsset")}</Button>
             </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>{editing ? `Edit Asset — ${editing.sap_code}` : "Create New Asset"}</DialogTitle></DialogHeader>
@@ -699,7 +702,7 @@ export default function AssetsPage() {
                     toast({ title: "Deleted", description: `Asset ${deleteConfirm.sap_code} has been deleted` });
                     setDeleteConfirm(null);
                   } catch (err: any) {
-                    toast({ title: "Error", description: err.message, variant: "destructive" });
+                    toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
                   }
                 }
               }}

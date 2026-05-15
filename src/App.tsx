@@ -57,7 +57,7 @@ function PageLoader() {
 }
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="ams-theme">
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="ams-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />

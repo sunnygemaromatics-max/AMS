@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Shield, Users, KeyRound, Search, Check, X, AlertTriangle, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { parseDbError } from "@/lib/supabase-error";
 
 const ROLES: AppRole[] = ["admin", "it", "hr", "viewer"];
 
@@ -133,7 +134,7 @@ export default function RulesPage() {
       }
       qc.invalidateQueries({ queryKey: ["users-with-roles"] });
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+      toast({ title: "Failed", description: parseDbError(err), variant: "destructive" });
     }
   }
 
@@ -147,7 +148,7 @@ export default function RulesPage() {
       toast({ title: "Status updated", description: `Set to ${status}` });
       qc.invalidateQueries({ queryKey: ["users-with-roles"] });
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
+      toast({ title: "Failed", description: parseDbError(err), variant: "destructive" });
     }
   }
 

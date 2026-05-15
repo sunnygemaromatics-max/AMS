@@ -30,24 +30,49 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
-      # ── Deploy to GitHub Pages ─────────────────────────────────────────────
-      - name: Deploy to GitHub Pages
+      # ── Always also publish to GitHub Pages as a free backup mirror ────────
+      # (Costs nothing and gives you a fallback URL while DNS / Hostinger sorts itself out.)
+      - name: Deploy to GitHub Pages (backup mirror)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           cname: ams.thestudioinfinito.com
 
+      # ── Detect whether Hostinger FTP secrets are configured ────────────────
+      # GitHub Actions can't reference secrets directly in `if:` conditions,
+      # so this step copies them into a step output we CAN reference below.
+      - name: Check Hostinger FTP secrets
+        id: ftp_check
+        run: |
+          if [ -n "${{ secrets.HOSTINGER_FTP_SERVER }}" ] && [ -n "${{ secrets.HOSTINGER_FTP_USERNAME }}" ] && [ -n "${{ secrets.HOSTINGER_FTP_PASSWORD }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Hostinger FTP secrets present — will deploy to public_html/"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  Hostinger FTP secrets not configured — skipping FTP deploy."
+            echo "   Add HOSTINGER_FTP_SERVER / _USERNAME / _PASSWORD in repo settings to enable."
+          fi
+
       # ── Deploy to Hostinger via FTP ────────────────────────────────────────
-      # Uncomment this block once you add FTP_SERVER, FTP_USERNAME, FTP_PASSWORD
-      # to your GitHub repository secrets (Settings → Secrets → Actions).
-      #
-      # - name: Deploy to Hostinger FTP
-      #   uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-      #   with:
-      #     server: ${{ secrets.FTP_SERVER }}
-      #     username: ${{ secrets.FTP_USERNAME }}
-      #     password: ${{ secrets.FTP_PASSWORD }}
-      #     local-dir: ./dist/
-      #     server-dir: /public_html/
-      #     dangerous-clean-slate: false
+      # ACTIVATES AUTOMATICALLY once you add the 3 secrets below in
+      #   Repo → Settings → Secrets and variables → Actions → New repository secret
+      #     HOSTINGER_FTP_SERVER     e.g. ftp.thestudioinfinito.com
+      #     HOSTINGER_FTP_USERNAME   from Hostinger → Files → FTP Accounts
+      #     HOSTINGER_FTP_PASSWORD   from Hostinger → Files → FTP Accounts
+      - name: Deploy to Hostinger FTP
+        if: steps.ftp_check.outputs.configured == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          local-dir: ./dist/
+          # Most Hostinger shared plans use /public_html/ as the web root.
+          # If your domain is on a subfolder (e.g. addon domain), change this
+          # to /domains/yourdomain.com/public_html/ instead.
+          server-dir: /public_html/
+          # Don't wipe everything — Hostinger may have other files (logo, .htaccess) you want kept.
+          dangerous-clean-slate: false
+          # Skip files that haven't changed → much faster uploads after the first run.
+          state-name: .ftp-deploy-sync-state.json

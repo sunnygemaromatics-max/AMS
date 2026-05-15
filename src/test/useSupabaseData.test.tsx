@@ -1,14 +1,17 @@
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAssets, useCreateAsset, useUpdateAsset } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 
-// Mock Supabase
-const mockSupabase = {
-  from: jest.fn(),
-};
+// Mock Supabase — hoisted so the mock factory can reference it
+const { mockSupabase } = vi.hoisted(() => ({
+  mockSupabase: {
+    from: vi.fn(),
+  },
+}));
 
-jest.mock('@/integrations/supabase/client', () => ({
+vi.mock('@/integrations/supabase/client', () => ({
   supabase: mockSupabase,
 }));
 
@@ -29,7 +32,7 @@ const createWrapper = () => {
 
 describe('useSupabaseData', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('useAssets', () => {
@@ -51,14 +54,14 @@ describe('useSupabaseData', () => {
         },
       ];
 
-      const mockSelect = jest.fn().mockReturnThis();
-      const mockEq = jest.fn().mockReturnThis();
-      const mockOrder = jest.fn().mockResolvedValue({
+      const mockSelect = vi.fn().mockReturnThis();
+      const mockEq = vi.fn().mockReturnThis();
+      const mockOrder = vi.fn().mockResolvedValue({
         data: mockAssets,
         error: null,
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
+      (supabase.from as unknown as Mock).mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         order: mockOrder,
@@ -74,21 +77,25 @@ describe('useSupabaseData', () => {
       });
 
       expect(supabase.from).toHaveBeenCalledWith('assets');
-      expect(mockSelect).toHaveBeenCalledWith('*, employees(name, employee_code, department), locations(name, code), vendors(name), categories(name, code), departments(name, code), companies(name)');
+      // Embed select uses a template literal — assert on key embedded relations rather than exact spacing
+      const selectArg: string = mockSelect.mock.calls[0][0];
+      expect(selectArg).toContain('employees:current_employee_id');
+      expect(selectArg).toContain('locations:current_location_id');
+      expect(selectArg).toContain('categories:category_id');
       expect(mockEq).toHaveBeenCalledWith('is_deleted', false);
       expect(mockOrder).toHaveBeenCalledWith('bin_card_no');
     });
 
     it('should handle fetch error', async () => {
       const mockError = new Error('Failed to fetch assets');
-      const mockSelect = jest.fn().mockReturnThis();
-      const mockEq = jest.fn().mockReturnThis();
-      const mockOrder = jest.fn().mockResolvedValue({
+      const mockSelect = vi.fn().mockReturnThis();
+      const mockEq = vi.fn().mockReturnThis();
+      const mockOrder = vi.fn().mockResolvedValue({
         data: null,
         error: mockError,
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
+      (supabase.from as unknown as Mock).mockReturnValue({
         select: mockSelect,
         eq: mockEq,
         order: mockOrder,
@@ -107,11 +114,11 @@ describe('useSupabaseData', () => {
 
   describe('useCreateAsset', () => {
     it('should create asset successfully', async () => {
-      const mockInsert = jest.fn().mockResolvedValue({
+      const mockInsert = vi.fn().mockResolvedValue({
         error: null,
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
+      (supabase.from as unknown as Mock).mockReturnValue({
         insert: mockInsert,
       });
 
@@ -137,11 +144,11 @@ describe('useSupabaseData', () => {
 
     it('should handle create error', async () => {
       const mockError = new Error('Failed to create asset');
-      const mockInsert = jest.fn().mockResolvedValue({
+      const mockInsert = vi.fn().mockResolvedValue({
         error: mockError,
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
+      (supabase.from as unknown as Mock).mockReturnValue({
         insert: mockInsert,
       });
 
@@ -165,12 +172,12 @@ describe('useSupabaseData', () => {
 
   describe('useUpdateAsset', () => {
     it('should update asset successfully', async () => {
-      const mockUpdate = jest.fn().mockReturnThis();
-      const mockEq = jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockReturnThis();
+      const mockEq = vi.fn().mockResolvedValue({
         error: null,
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
+      (supabase.from as unknown as Mock).mockReturnValue({
         update: mockUpdate,
         eq: mockEq,
       });
@@ -198,12 +205,12 @@ describe('useSupabaseData', () => {
 
     it('should handle update error', async () => {
       const mockError = new Error('Failed to update asset');
-      const mockUpdate = jest.fn().mockReturnThis();
-      const mockEq = jest.fn().mockResolvedValue({
+      const mockUpdate = vi.fn().mockReturnThis();
+      const mockEq = vi.fn().mockResolvedValue({
         error: mockError,
       });
 
-      (supabase.from as jest.Mock).mockReturnValue({
+      (supabase.from as unknown as Mock).mockReturnValue({
         update: mockUpdate,
         eq: mockEq,
       });

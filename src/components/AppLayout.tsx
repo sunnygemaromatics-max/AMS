@@ -5,15 +5,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, Sun, Moon } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { BrandingLoader } from "@/components/BrandingLoader";
 import { TsiLogo } from "@/components/TsiLogo";
-import { useTheme } from "next-themes";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTranslation } from "react-i18next";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, profile, roles, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <SidebarProvider>
@@ -27,21 +29,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <div className="flex items-center gap-2.5 animate-fade-in">
                 <TsiLogo size={32} />
                 <div className="hidden sm:flex flex-col leading-tight">
-                  <span className="font-bold text-sm tsi-gradient-text">Asset Management</span>
+                  <span className="font-bold text-sm tsi-gradient-text">{t("app.name")}</span>
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">The Studio Infinito</span>
                 </div>
               </div>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex items-center gap-1.5">
                 <NotificationBell />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  aria-label="Toggle theme"
-                >
-                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </Button>
+                <LanguageSwitcher />
+                <ThemeToggle />
                 {roles.map((r) => (
                   <Badge
                     key={r}
@@ -68,7 +63,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={signOut} className="cursor-pointer">
-                        <LogOut className="h-4 w-4 mr-2" />Sign out
+                        <LogOut className="h-4 w-4 mr-2" />{t("auth.signOut")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

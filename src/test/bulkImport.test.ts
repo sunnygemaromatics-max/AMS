@@ -1,31 +1,32 @@
+import { describe, it, expect, vi } from 'vitest';
 import { parseExcelFile, parseCsvFile, classifySheet, normalizeRow, pick } from '@/lib/bulkImport';
 import ExcelJS from 'exceljs';
 
 // Mock ExcelJS
-jest.mock('exceljs', () => {
+vi.mock('exceljs', () => {
   return {
-    Workbook: jest.fn().mockImplementation(() => ({
-      xlsx: {
-        load: jest.fn().mockResolvedValue(true),
-      },
-      worksheets: [
-        {
-          name: 'Test Sheet',
-          eachRow: jest.fn((callback) => {
-            // Mock header row
-            callback({ eachCell: jest.fn((cellCallback) => {
-              cellCallback({ value: 'Name' }, 1);
-              cellCallback({ value: 'Email' }, 2);
-            }) }, 1);
-            // Mock data rows
-            callback({ eachCell: jest.fn((cellCallback) => {
-              cellCallback({ value: 'John Doe' }, 1);
-              cellCallback({ value: 'john@example.com' }, 2);
-            }) }, 2);
-          }),
+    default: {
+      Workbook: vi.fn().mockImplementation(() => ({
+        xlsx: {
+          load: vi.fn().mockResolvedValue(true),
         },
-      ],
-    })),
+        worksheets: [
+          {
+            name: 'Test Sheet',
+            eachRow: vi.fn((callback) => {
+              callback({ eachCell: vi.fn((cellCallback) => {
+                cellCallback({ value: 'Name' }, 1);
+                cellCallback({ value: 'Email' }, 2);
+              }) }, 1);
+              callback({ eachCell: vi.fn((cellCallback) => {
+                cellCallback({ value: 'John Doe' }, 1);
+                cellCallback({ value: 'john@example.com' }, 2);
+              }) }, 2);
+            }),
+          },
+        ],
+      })),
+    },
   };
 });
 

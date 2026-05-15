@@ -1,11 +1,16 @@
-import { Package, Users, MapPin, TrendingUp, Monitor, Loader2, Shield, Key, AlertTriangle } from "lucide-react";
+import { Package, Users, TrendingUp, Monitor, Loader2, AlertTriangle, LayoutDashboard, BellRing } from "lucide-react";
 import { KpiCard } from "@/components/KpiCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDashboardStats, useAssets, useLicenses } from "@/hooks/useSupabaseData";
-import { StatusBadge } from "@/components/StatusBadge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { useDashboardStats, useAssets, useLicenses } from "@/hooks/useSupabaseData";
+import { useNotifications } from "@/hooks/useNotifications";
+import { StatusBadge } from "@/components/StatusBadge";
+import { AlertsPanel } from "@/components/AlertsPanel";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useMemo } from "react";
 
 // TSI brand palette for charts (purple → magenta → rose → peach + accents)
 const COLORS = [
@@ -24,7 +29,18 @@ export default function DashboardPage() {
   const { data: stats, isLoading, error: statsError } = useDashboardStats();
   const { data: assets, error: assetsError } = useAssets();
   const { data: licenses, error: licensesError } = useLicenses();
+  const { data: notifications = [] } = useNotifications(60);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "alerts" ? "alerts" : "overview";
+
+  // Lift the alert counts so the tab can show a badge
+  const alertCounts = useMemo(() => {
+    const expired = notifications.filter((n) => n.severity === "expired").length;
+    const critical = notifications.filter((n) => n.severity === "critical").length;
+    return { expired, critical, total: notifications.length, urgent: expired + critical };
+  }, [notifications]);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
@@ -84,42 +100,90 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="animate-fade-in-up">
-        <h1 className="text-3xl font-bold tracking-tight">
-          <span className="tsi-gradient-text">Dashboard</span>
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">Asset Management Overview at a glance</p>
+      <div className="animate-fade-in-up flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            <span className="tsi-gradient-text">{t("nav.dashboard")}</span>
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">{t("dashboard.subtitle")}</p>
+        </div>
       </div>
+
+      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}>
+        <TabsList className="bg-card border border-border/60 p-1 h-auto">
+          <TabsTrigger value="overview" className="gap-2 px-4">
+            <LayoutDashboard className="h-3.5 w-3.5" /> {t("dashboard.overview")}
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="gap-2 px-4 relative">
+            <BellRing className="h-3.5 w-3.5" /> {t("dashboard.alerts")}
+            {alertCounts.urgent > 0 && (
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-destructive/15 text-destructive border-destructive/30 tabular-nums">
+                {alertCounts.urgent}
+              </Badge>
+            )}
+            {alertCounts.urgent === 0 && alertCounts.total > 0 && (
+              <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-accent/15 text-accent border-accent/30 tabular-nums">
+                {alertCounts.total}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-5 space-y-6 focus-visible:outline-none">
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard title="Total Assets" value={total} subtitle="Across all locations" icon={Package} gradient="kpi-gradient-1" />
-        <KpiCard title="Allocated" value={allocated} subtitle={total > 0 ? `${Math.round(allocated / total * 100)}% utilization` : '—'} icon={Monitor} gradient="kpi-gradient-2" />
-        <KpiCard title="Employees" value={stats?.employeeCount || 0} subtitle={`${stats?.locationCount || 0} locations`} icon={Users} gradient="kpi-gradient-3" />
-        <KpiCard title="Total Value" value={`₹${(totalValue / 100000).toFixed(1)}L`} subtitle={`${stats?.licenseCount || 0} licenses tracked`} icon={TrendingUp} gradient="kpi-gradient-4" />
+        <KpiCard title={t("dashboard.totalAssets")} value={total} subtitle={t("dashboard.allLocations")} icon={Package} gradient="kpi-gradient-1" />
+        <KpiCard title={t("dashboard.allocated")} value={allocated} subtitle={total > 0 ? t("dashboard.utilization", { percent: Math.round(allocated / total * 100) }) : '—'} icon={Monitor} gradient="kpi-gradient-2" />
+        <KpiCard title={t("nav.employees")} value={stats?.employeeCount || 0} subtitle={`${stats?.locationCount || 0} ${t("nav.locations").toLowerCase()}`} icon={Users} gradient="kpi-gradient-3" />
+        <KpiCard title={t("dashboard.totalValue")} value={`₹${(totalValue / 100000).toFixed(1)}L`} subtitle={`${stats?.licenseCount || 0} ${t("nav.licenses").toLowerCase()}`} icon={TrendingUp} gradient="kpi-gradient-4" />
       </div>
 
-      {/* Expiring Alerts */}
-      {((stats?.expiringWarranties || []).length > 0 || (stats?.expiringLicenses || []).length > 0) && (
-        <Card className="border-warning/30 bg-warning/5 animate-fade-in-up stagger-2">
+      {/* Compact alerts strip in Overview — clicking jumps to the full Alerts tab */}
+      {alertCounts.total > 0 && (
+        <Card
+          onClick={() => setSearchParams({ tab: "alerts" }, { replace: true })}
+          className="cursor-pointer border-warning/30 bg-warning/5 animate-fade-in-up stagger-2 hover:border-warning/50 transition-colors group"
+        >
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              Expiring Soon (Next 30 Days)
+            <CardTitle className="text-sm flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                {alertCounts.expired > 0 ? `${alertCounts.expired} expired` : "Expiring soon"}
+                {alertCounts.critical > 0 && (
+                  <span className="text-muted-foreground font-normal">• {alertCounts.critical} urgent</span>
+                )}
+                {alertCounts.total > alertCounts.urgent && (
+                  <span className="text-muted-foreground font-normal">• {alertCounts.total - alertCounts.urgent} upcoming</span>
+                )}
+              </span>
+              <span className="text-xs text-muted-foreground font-normal group-hover:text-warning transition-colors">
+                Open Alerts tab →
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {(stats?.expiringWarranties || []).map((a: any) => (
-                <Badge key={a.id} variant="outline" className="text-xs cursor-pointer" onClick={() => navigate(`/assets/${a.id}`)}>
-                  <Shield className="h-3 w-3 mr-1" /> {a.sap_code} warranty expires {a.warranty_end}
+            <div className="flex flex-wrap gap-1.5">
+              {notifications.slice(0, 6).map((n) => (
+                <Badge
+                  key={n.id}
+                  variant="outline"
+                  className={
+                    n.severity === "expired"
+                      ? "text-[10px] bg-destructive/10 text-destructive border-destructive/30"
+                      : n.severity === "critical"
+                      ? "text-[10px] bg-warning/10 text-warning border-warning/30"
+                      : "text-[10px]"
+                  }
+                >
+                  {n.title}
                 </Badge>
               ))}
-              {(stats?.expiringLicenses || []).map((l: any) => (
-                <Badge key={l.id} variant="outline" className="text-xs">
-                  <Key className="h-3 w-3 mr-1" /> {l.license_type} license expires {l.validity_end}
+              {notifications.length > 6 && (
+                <Badge variant="outline" className="text-[10px] font-medium">
+                  +{notifications.length - 6} more
                 </Badge>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -242,6 +306,12 @@ export default function DashboardPage() {
           ) : <p className="text-muted-foreground text-sm text-center py-8">No assets yet.</p>}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="alerts" className="mt-5 focus-visible:outline-none">
+          <AlertsPanel windowDays={60} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

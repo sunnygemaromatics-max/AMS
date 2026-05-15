@@ -65,13 +65,14 @@ export default function AuthPage() {
 
     // Username login: no "@" → look up email via DB function
     if (!email.includes("@")) {
-      const { data: found, error: rpcErr } = await supabase.rpc("get_email_by_username", { p_username: email });
+      // RPC defined in migrations but not in generated types — cast through unknown
+      const { data: found, error: rpcErr } = await (supabase as any).rpc("get_email_by_username", { p_username: email });
       if (rpcErr || !found) {
         toast.error("No account found with that username");
         setBusy(false);
         return;
       }
-      email = found as string;
+      email = String(found);
     }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password: loginPw });
@@ -97,8 +98,8 @@ export default function AuthPage() {
 
     setBusy(true);
 
-    // Check username availability
-    const { data: avail } = await supabase.rpc("username_available", { p_username: signupUsername });
+    // Check username availability (RPC not in generated types)
+    const { data: avail } = await (supabase as any).rpc("username_available", { p_username: signupUsername });
     if (!avail) {
       toast.error("Username is already taken — choose another");
       setBusy(false);

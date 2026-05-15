@@ -286,7 +286,7 @@ export default function BulkImportPage() {
     const results: Record<string, Stats> = {};
     const detailEntries: any[] = [];
     const snapshot: Snapshot = { updates: [], inserts: [] };
-    let totals = { total: 0, ins: 0, upd: 0, skip: 0, fail: 0 };
+    const totals = { total: 0, ins: 0, upd: 0, skip: 0, fail: 0 };
 
     for (const f of files) {
       for (const sheet of f.sheets) {

@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useLicenses, useCreateLicense, useUpdateLicense, useDeleteLicense, useEmployees, useCompanies, useLocations } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { parseDbError } from "@/lib/supabase-error";
 
 const LICENSE_TYPES = [
   { value: 'email', label: 'Email Account', icon: Mail },
@@ -42,6 +44,7 @@ export default function LicensesPage() {
   const deleteLicense = useDeleteLicense();
   const { isAdmin, canManageLicenses } = useAuth();
   const canEdit = isAdmin || canManageLicenses;
+  const { t } = useTranslation();
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -84,7 +87,7 @@ export default function LicensesPage() {
       setShowCreate(false);
       setForm(EMPTY_LICENSE);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -116,7 +119,7 @@ export default function LicensesPage() {
       setEditing(null);
       setForm(EMPTY_LICENSE);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -127,7 +130,7 @@ export default function LicensesPage() {
       toast({ title: "Deleted", description: "License removed" });
       setConfirmDelete(null);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -176,13 +179,13 @@ export default function LicensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Licenses & Accounts</h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} licenses tracked</p>
+          <h1 className="text-2xl font-bold">{t("pages.licensesTitle")}</h1>
+          <p className="text-muted-foreground text-sm">{filtered.length} {t("nav.licenses").toLowerCase()}</p>
         </div>
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           {canEdit && (
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" /> Add License</Button>
+              <Button><Plus className="h-4 w-4 mr-1" /> {t("pages.addLicense")}</Button>
             </DialogTrigger>
           )}
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">

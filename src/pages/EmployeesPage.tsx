@@ -4,6 +4,7 @@ import {
   useCreateEmployee, useUpdateEmployee, useDeactivateEmployee, useAssets,
 } from "@/hooks/useSupabaseData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, User, Package, Plus, Loader2, Eye, ChevronDown, Pencil, Trash2 } from "lucide-react";
@@ -25,6 +26,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "@/hooks/use-toast";
+import { parseDbError } from "@/lib/supabase-error";
 import { useNavigate } from "react-router-dom";
 
 const statusLabel = (s: string) =>
@@ -84,6 +86,7 @@ export default function EmployeesPage() {
   const deactivateEmployee             = useDeactivateEmployee();
   const navigate                       = useNavigate();
   const { isAdmin, canEditEmployees }  = useAuth();
+  const { t } = useTranslation();
   const canEdit = isAdmin || canEditEmployees;
 
   const [search, setSearch]               = useState("");
@@ -173,7 +176,7 @@ export default function EmployeesPage() {
       setForm(EMPTY_FORM);
       setShowAdvanced(false);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -239,7 +242,7 @@ export default function EmployeesPage() {
         setForm(EMPTY_FORM);
         setShowAdvanced(false);
       } catch (err: any) {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
+        toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
       }
     } else {
       await handleCreate();
@@ -253,7 +256,7 @@ export default function EmployeesPage() {
       toast({ title: "Deactivated", description: `${confirmDelete.name} has been deactivated.` });
       setConfirmDelete(null);
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: parseDbError(err), variant: "destructive" });
     }
   };
 
@@ -270,16 +273,16 @@ export default function EmployeesPage() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Employees</h1>
+          <h1 className="text-2xl font-bold">{t("pages.employeesTitle")}</h1>
           <p className="text-muted-foreground text-sm">
-            {filtered.length} of {(employees || []).length} employees
+            {filtered.length} / {(employees || []).length} {t("nav.employees").toLowerCase()}
           </p>
         </div>
 
         <Dialog open={showCreate} onOpenChange={(o) => { setShowCreate(o); if (!o) { setForm(EMPTY_FORM); setShowAdvanced(false); setEditing(null); } }}>
           {canEdit && (
             <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4 mr-1" /> Add Employee</Button>
+              <Button><Plus className="h-4 w-4 mr-1" /> {t("pages.addEmployee")}</Button>
             </DialogTrigger>
           )}
 

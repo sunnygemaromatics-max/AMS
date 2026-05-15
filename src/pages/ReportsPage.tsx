@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, FileText, Users, Package, Key, AlertTriangle } from "lucide-react";
+import { Download, FileText, Users, Package, Key, AlertTriangle, LayoutGrid, Laptop, Monitor, Mail, Shield, Server, Globe, Phone, Camera, Wifi, Network, FileCode } from "lucide-react";
 import { format, addDays } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { StatusBadge } from "@/components/StatusBadge";
 
 // ─── CSV helper ──────────────────────────────────────────────────────────────
 function exportCSV(filename: string, headers: string[], rows: (string | number | null | undefined)[][]) {
@@ -627,6 +628,155 @@ function ExpiryReport() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CATEGORIES REPORT - 16 Category Cards with Asset Counts
+// ═══════════════════════════════════════════════════════════════════════════════
+const CATEGORY_DEFINITIONS = [
+  { id: 1, category: "IT Assets", description: "Laptops", coverage: "All Locations", icon: Laptop, filter: (a: any) => a.asset_subtype === 'laptop', color: "bg-blue-500" },
+  { id: 2, category: "IT Assets", description: "Desktops", coverage: "All Locations", icon: Monitor, filter: (a: any) => a.asset_subtype === 'desktop', color: "bg-blue-600" },
+  { id: 3, category: "IT Assets", description: "Allied", coverage: "MUMBAI", icon: FileCode, filter: (a: any) => a.asset_subtype === 'other' && a.current_location_id?.includes('mumbai'), color: "bg-blue-700" },
+  { id: 4, category: "User Management", description: "Email Accounts", coverage: "All Locations", icon: Mail, filter: (a: any) => a.asset_subtype === 'email_account', color: "bg-purple-500" },
+  { id: 5, category: "Software", description: "Antivirus", coverage: "All Locations", icon: Shield, filter: (a: any) => a.asset_subtype === 'antivirus', color: "bg-green-500" },
+  { id: 6, category: "Software", description: "Office 365", coverage: "All Locations", icon: FileText, filter: (a: any) => a.asset_subtype === 'software_license' && (a.name?.toLowerCase().includes('office') || a.license_key?.toLowerCase().includes('microsoft')), color: "bg-green-600" },
+  { id: 7, category: "Software", description: "SAP Licenses", coverage: "All Locations", icon: FileCode, filter: (a: any) => a.asset_subtype === 'sap_license', color: "bg-green-700" },
+  { id: 8, category: "Remote Access", description: "TS Plus (GEM, KPL - Support Team)", coverage: "Created Users", icon: Globe, filter: (a: any) => a.asset_subtype === 'other' && a.name?.toLowerCase().includes('ts plus'), color: "bg-indigo-500" },
+  { id: 9, category: "Network & Security", description: "Firewall", coverage: "All Locations", icon: Shield, filter: (a: any) => a.asset_subtype === 'networking' && a.name?.toLowerCase().includes('firewall'), color: "bg-red-500" },
+  { id: 10, category: "Network & Security", description: "Network Infrastructure", coverage: "All Locations", icon: Network, filter: (a: any) => a.asset_subtype === 'networking', color: "bg-red-600" },
+  { id: 11, category: "Surveillance", description: "CCTV Cameras", coverage: "All Locations", icon: Camera, filter: (a: any) => a.asset_subtype === 'other' && a.name?.toLowerCase().includes('cctv'), color: "bg-orange-500" },
+  { id: 12, category: "Connectivity", description: "Internet Connections", coverage: "All Locations", icon: Wifi, filter: (a: any) => a.asset_subtype === 'other' && (a.name?.toLowerCase().includes('internet') || a.name?.toLowerCase().includes('broadband')), color: "bg-cyan-500" },
+  { id: 13, category: "Communication", description: "IP Phones & Intercom", coverage: "All Locations", icon: Phone, filter: (a: any) => a.asset_subtype === 'other' && (a.name?.toLowerCase().includes('phone') || a.name?.toLowerCase().includes('intercom') || a.name?.toLowerCase().includes('ip phone')), color: "bg-teal-500" },
+  { id: 14, category: "Mobile Devices", description: "Company Mobiles", coverage: "All Locations", icon: Key, filter: (a: any) => a.asset_subtype === 'mobile_device' || a.asset_subtype === 'tablet', color: "bg-pink-500" },
+  { id: 15, category: "Servers & Infrastructure", description: "Servers", coverage: "All Locations", icon: Server, filter: (a: any) => a.asset_subtype === 'server', color: "bg-amber-600" },
+  { id: 16, category: "Domain", description: "Domain Management", coverage: "All Company", icon: Globe, filter: (a: any) => a.asset_subtype === 'other' && (a.name?.toLowerCase().includes('domain') || a.specifications?.toLowerCase().includes('domain')), color: "bg-violet-600" },
+];
+
+function CategoriesReport(_props: any) {
+  const { data: assets = [] } = useAssets();
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+
+  // Group by main category
+  const groupedCategories = CATEGORY_DEFINITIONS.reduce((acc: any, cat) => {
+    if (!acc[cat.category]) acc[cat.category] = [];
+    acc[cat.category].push(cat);
+    return acc;
+  }, {});
+
+  // Count assets for each category
+  const getCount = (filterFn: any) => assets.filter(filterFn).length;
+
+  // Get filtered assets for a category
+  const getFilteredAssets = (filterFn: any) => assets.filter(filterFn);
+
+  if (selectedCategory) {
+    const filteredAssets = getFilteredAssets(selectedCategory.filter);
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold">{selectedCategory.category} - {selectedCategory.description}</h2>
+            <p className="text-muted-foreground text-sm">Coverage: {selectedCategory.coverage} • {filteredAssets.length} assets found</p>
+          </div>
+          <Button variant="outline" onClick={() => setSelectedCategory(null)}>
+            Back to Categories
+          </Button>
+        </div>
+
+        {filteredAssets.length > 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 z-10 bg-card">
+                    <tr className="border-b bg-muted/30">
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs uppercase">SAP Code</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs uppercase">Name</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs uppercase">Type</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs uppercase">Location</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs uppercase">Employee</th>
+                      <th className="text-left py-3 px-3 font-medium text-muted-foreground text-xs uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAssets.map((asset: any) => (
+                      <tr key={asset.id} className="border-b border-border/50 hover:bg-muted/20">
+                        <td className="py-3 px-3 font-mono text-xs font-semibold text-accent">{asset.sap_code}</td>
+                        <td className="py-3 px-3 font-medium">{asset.name}</td>
+                        <td className="py-3 px-3"><Badge variant="outline" className="text-[10px]">{asset.asset_subtype}</Badge></td>
+                        <td className="py-3 px-3 text-muted-foreground">{asset.locations?.name || '—'}</td>
+                        <td className="py-3 px-3">{asset.employees?.name || '—'}</td>
+                        <td className="py-3 px-3"><StatusBadge status={asset.status.replace(/_/g, ' ')} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-muted-foreground">No assets found in this category.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold">Asset Categories Report</h2>
+          <p className="text-muted-foreground text-sm">16 predefined categories covering all IT assets, software, network, and infrastructure</p>
+        </div>
+        <Button variant="outline" onClick={() => exportCSV("asset-categories",
+          ["Category", "Description", "Coverage", "Asset Count"],
+          CATEGORY_DEFINITIONS.map(c => [c.category, c.description, c.coverage, assets.filter(c.filter).length])
+        )}>
+          <Download className="h-4 w-4 mr-1" /> Export Counts
+        </Button>
+      </div>
+
+      {Object.entries(groupedCategories).map(([groupName, categories]: [string, any]) => (
+        <div key={groupName} className="space-y-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent"></span>
+            {groupName}
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {categories.map((cat: any) => {
+              const count = getCount(cat.filter);
+              const Icon = cat.icon;
+              return (
+                <Card
+                  key={cat.id}
+                  className="group relative overflow-hidden hover:border-accent/60 transition-all cursor-pointer hover-lift glass-card"
+                  onClick={() => setSelectedCategory(cat)}
+                >
+                  <div className={`absolute inset-x-0 top-0 h-1 ${cat.color} opacity-80 group-hover:opacity-100 transition-opacity`} />
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className={`h-11 w-11 rounded-xl ${cat.color} flex items-center justify-center shrink-0 shadow-sm ring-2 ring-white/40 group-hover:scale-110 transition-transform`}>
+                        <Icon className="h-5 w-5 text-white" />
+                      </div>
+                      <Badge variant="secondary" className="text-lg font-bold tabular-nums">{count}</Badge>
+                    </div>
+                    <div className="mt-3">
+                      <p className="font-semibold text-sm leading-tight">{cat.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{cat.coverage}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // PAGE ROOT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function ReportsPage() {
@@ -656,6 +806,7 @@ export default function ReportsPage() {
           {canSeeAssets && (
             <>
               <TabsTrigger value="assets"><Package className="h-4 w-4 mr-1" /> Asset Register</TabsTrigger>
+              <TabsTrigger value="categories"><LayoutGrid className="h-4 w-4 mr-1" /> Categories</TabsTrigger>
               <TabsTrigger value="summary"><FileText className="h-4 w-4 mr-1" /> Summary</TabsTrigger>
               <TabsTrigger value="expiry"><AlertTriangle className="h-4 w-4 mr-1" /> Expiry Alerts</TabsTrigger>
             </>
@@ -669,6 +820,9 @@ export default function ReportsPage() {
           <>
             <TabsContent value="assets" className="mt-4">
               <AssetsReport companies={companies} departments={departments} locations={locations} employees={employees} />
+            </TabsContent>
+            <TabsContent value="categories" className="mt-4">
+              <CategoriesReport companies={companies} departments={departments} locations={locations} employees={employees} />
             </TabsContent>
             <TabsContent value="summary" className="mt-4">
               <SummaryReport companies={companies} departments={departments} locations={locations} />

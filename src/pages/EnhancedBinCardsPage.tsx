@@ -93,7 +93,7 @@ interface BinCardEntry {
   poNo: string;
   employeeCode: string;
   employeeName: string;
-  condition: 'new' | 'good' | 'fair' | 'poor' | 'damaged';
+  condition: 'new' | 'good' | 'fair' | 'poor' | 'damaged' | '';
   warrantyInfo: string;
   attachments: string[];
   tags: string[];
@@ -166,7 +166,7 @@ export default function EnhancedBinCardsPage() {
 
     // Fallback: synthesize a single "opening" entry from the asset record
     // so the UI isn't empty for assets that don't have bin_card_entries yet.
-    return [{
+    const synthetic: BinCardEntry = {
       id: `synthetic-${selectedAsset.id}`,
       entryNo: 1,
       date: selectedAsset.purchase_date || selectedAsset.created_at?.split("T")[0] || new Date().toISOString().split("T")[0],
@@ -196,7 +196,8 @@ export default function EnhancedBinCardsPage() {
       warrantyInfo: selectedAsset.warranty_end ? `Warranty until ${selectedAsset.warranty_end}` : "",
       attachments: [],
       tags: [],
-    }];
+    };
+    return [synthetic];
   }, [selectedAsset, binRows]);
 
   // Backwards-compat alias — the rest of the page still references mockBinEntries

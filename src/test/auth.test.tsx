@@ -1,19 +1,22 @@
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-// Mock Supabase
-const mockSupabase = {
-  auth: {
-    onAuthStateChange: jest.fn(),
-    signOut: jest.fn(),
+// Mock Supabase — hoisted so the mock factory can reference it
+const { mockSupabase } = vi.hoisted(() => ({
+  mockSupabase: {
+    auth: {
+      onAuthStateChange: vi.fn(),
+      signOut: vi.fn(),
+    },
+    from: vi.fn(),
   },
-  from: jest.fn(),
-};
+}));
 
-jest.mock('@/integrations/supabase/client', () => ({
+vi.mock('@/integrations/supabase/client', () => ({
   supabase: mockSupabase,
 }));
 
@@ -50,13 +53,13 @@ const createWrapper = () => {
 
 describe('AuthContext', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should provide loading state initially', () => {
-    const mockOnAuthStateChange = jest.fn();
-    (supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue({
-      data: { subscription: { unsubscribe: jest.fn() } },
+    const mockOnAuthStateChange = vi.fn();
+    (supabase.auth.onAuthStateChange as unknown as Mock).mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
     });
 
     render(<TestComponent />, { wrapper: createWrapper() });
@@ -65,13 +68,13 @@ describe('AuthContext', () => {
   });
 
   it('should handle null user state', async () => {
-    const mockOnAuthStateChange = jest.fn((callback) => {
+    const mockOnAuthStateChange = vi.fn((callback) => {
       callback(null, null);
       return {
-        data: { subscription: { unsubscribe: jest.fn() } },
+        data: { subscription: { unsubscribe: vi.fn() } },
       };
     });
-    (supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue(mockOnAuthStateChange);
+    (supabase.auth.onAuthStateChange as unknown as Mock).mockReturnValue(mockOnAuthStateChange);
 
     render(<TestComponent />, { wrapper: createWrapper() });
 
@@ -88,13 +91,13 @@ describe('AuthContext', () => {
       email: 'test@example.com',
     };
 
-    const mockOnAuthStateChange = jest.fn((callback) => {
+    const mockOnAuthStateChange = vi.fn((callback) => {
       callback('SIGNED_IN', { user: mockUser });
       return {
-        data: { subscription: { unsubscribe: jest.fn() } },
+        data: { subscription: { unsubscribe: vi.fn() } },
       };
     });
-    (supabase.auth.onAuthStateChange as jest.Mock).mockReturnValue(mockOnAuthStateChange);
+    (supabase.auth.onAuthStateChange as unknown as Mock).mockReturnValue(mockOnAuthStateChange);
 
     // Mock profile and roles queries
     const mockProfileQuery = {
@@ -106,11 +109,11 @@ describe('AuthContext', () => {
       error: null,
     };
 
-    (supabase.from as jest.Mock).mockImplementation((table) => ({
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockResolvedValue(mockProfileQuery),
-      then: jest.fn((callback) => {
+    (supabase.from as unknown as Mock).mockImplementation((table) => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue(mockProfileQuery),
+      then: vi.fn((callback) => {
         if (table === 'profiles') {
           return Promise.resolve(mockProfileQuery);
         } else if (table === 'user_roles') {
@@ -130,7 +133,7 @@ describe('AuthContext', () => {
   });
 
   it('should throw error when useAuth is used outside provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     
     expect(() => {
       render(<TestComponent />);

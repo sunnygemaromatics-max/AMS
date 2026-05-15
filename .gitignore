@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local-only Hostinger upload bundle (regenerated on each build, never commit)
+ams-hostinger-upload.zip
+
 # Environment — never commit real secrets
 .env
 .env.production

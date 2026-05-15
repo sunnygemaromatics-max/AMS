@@ -127,31 +127,33 @@ export class InputSanitizer {
 }
 
 // Validation schemas with sanitization
-export const validationRules = {
+interface ValidationRule {
+  sanitize: (input: any) => any;
+  validate: (value: any) => boolean;
+  errorMessage: string;
+}
+
+export const validationRules: Record<string, ValidationRule> = {
   email: {
     sanitize: InputSanitizer.sanitizeEmail,
     validate: (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
     errorMessage: 'Please enter a valid email address'
   },
-  
   phone: {
     sanitize: InputSanitizer.sanitizePhone,
     validate: (phone: string) => phone.length >= 10,
     errorMessage: 'Please enter a valid phone number'
   },
-  
   assetCode: {
     sanitize: InputSanitizer.sanitizeAssetCode,
     validate: (code: string) => code.length >= 3,
     errorMessage: 'Asset code must be at least 3 characters'
   },
-  
   text: {
     sanitize: InputSanitizer.sanitizeText,
     validate: (text: string) => text.length > 0 && text.length <= 10000,
     errorMessage: 'Text must be between 1 and 10,000 characters'
   },
-  
   number: {
     sanitize: (input: string) => InputSanitizer.sanitizeNumber(input),
     validate: (num: number | null) => num !== null && !isNaN(num),

@@ -313,5 +313,32 @@
     transform: translateY(-2px);
     box-shadow: 0 10px 30px hsl(265 55% 50% / 0.12);
   }
+
+  /* Subtle gradient ring on focus/hover for chrome controls */
+  .ring-gradient {
+    position: relative;
+  }
+  .ring-gradient::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: var(--tsi-gradient);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.25s ease;
+  }
+  .ring-gradient:hover::after,
+  .ring-gradient:focus-visible::after {
+    opacity: 0.6;
+  }
+
+  /* Reusable card for KPI / category tiles in dark mode */
+  .dark .glass-card:hover {
+    box-shadow:
+      0 4px 12px hsl(0 0% 0% / 0.3),
+      0 8px 20px hsl(265 70% 50% / 0.18);
+    border-color: hsl(265 70% 60% / 0.4);
+  }
 }
 

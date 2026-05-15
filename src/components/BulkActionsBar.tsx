@@ -11,7 +11,7 @@ import { useEmployees, useLocations, useCreateTransaction } from "@/hooks/useSup
 import { useAuth } from "@/contexts/AuthContext";
 import { exportAssetReport, buildBinCardBlob } from "@/lib/pdf";
 import { toast } from "sonner";
-import JSZip from "jszip";
+// JSZip is only used when the user actually clicks "Export bin cards" — lazy import inside the handler.
 
 type Mode = "allocation" | "transfer";
 const CONDITIONS = ["Good", "Fair", "Damaged", "Needs Repair", "New"];
@@ -98,6 +98,7 @@ export function BulkActionsBar({ selected, onClear }: Props) {
   const exportBinCardsZip = async () => {
     setZipping(true);
     try {
+      const { default: JSZip } = await import("jszip");
       const zip = new JSZip();
       // Fetch transactions for all selected assets in parallel
       const txResults = await Promise.all(

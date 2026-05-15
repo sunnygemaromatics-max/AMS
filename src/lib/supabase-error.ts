@@ -10,9 +10,6 @@ export function parseDbError(err: unknown): string {
   const details: string = e?.details ?? "";
   const hint: string = e?.hint ?? "";
 
-  // DEBUG MODE: Show raw error for troubleshooting
-  return `DEBUG - Code: ${code}, Msg: ${msg}, Details: ${details}, Hint: ${hint}`;
-
   const codes: Record<string, string> = {
     "23505": "A record with this code or name already exists",
     "23503": "Cannot delete — this record is referenced by other data",

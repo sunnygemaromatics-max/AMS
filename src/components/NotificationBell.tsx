@@ -1,4 +1,4 @@
-import { Bell, Shield, Key, Wrench, AlertTriangle } from "lucide-react";
+import { Bell, Shield, Key, Wrench, AlertTriangle, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const ICONS = { warranty: Shield, amc: Wrench, license: Key } as const;
+const ICONS = { warranty: Shield, amc: Wrench, license: Key, custom: BellRing } as const;
 
 const SEV_CLASS: Record<AppNotification["severity"], string> = {
   expired: "bg-destructive/10 text-destructive border-destructive/30",
