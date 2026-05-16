@@ -151,6 +151,112 @@ BEGIN
     EXECUTE 'ALTER TABLE public.categories ENABLE TRIGGER USER';
 END $$;
 
+-- ════════════════════════════════════════════════════════════
+-- PART 3 — EXTENDED IT TAXONOMY (standard ITAM coverage)
+-- Researched against common IT Asset Management taxonomies
+-- (hardware / software / cloud / digital / infrastructure).
+-- Run this block ON ITS OWN, AFTER Part 1 succeeds (same
+-- "enum value can't be used in the txn it was added" rule).
+-- 100% additive — nothing existing is touched.
+-- ════════════════════════════════════════════════════════════
+
+-- ── Hardware / Infrastructure ──
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'monitor';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'router';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'switch';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'access_point';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'modem';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'docking_station';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'projector';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'peripheral';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'biometric_device';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'ip_phone';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'rack';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'inverter';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'sim_card';
+
+-- ── Software / Cloud / Digital ──
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'os_license';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'database_license';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'cloud_subscription';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'saas_subscription';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'ssl_certificate';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'domain';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'vpn_license';
+ALTER TYPE public.asset_subtype ADD VALUE IF NOT EXISTS 'internet_connection';
+
+
+-- ════════════════════════════════════════════════════════════
+-- PART 4 — seed categories for the extended IT taxonomy.
+-- Run AFTER Part 3 succeeds. Idempotent, trigger-safe.
+-- ════════════════════════════════════════════════════════════
+
+DO $$
+DECLARE
+    has_tbl BOOLEAN;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'categories'
+    ) INTO has_tbl;
+    IF NOT has_tbl THEN
+        RAISE NOTICE 'categories table not found — skipping extended seed.';
+        RETURN;
+    END IF;
+
+    EXECUTE 'ALTER TABLE public.categories DISABLE TRIGGER USER';
+
+    BEGIN
+        -- New parent class for everything that isn't in the 4 core PDF classes
+        INSERT INTO public.categories (name, code, asset_type, is_consumable)
+        SELECT 'Additional IT & Infrastructure', 'CLS-IT-EXT', 'tangible', false
+        WHERE NOT EXISTS (SELECT 1 FROM public.categories WHERE code = 'CLS-IT-EXT');
+
+        -- Hardware / Infrastructure children
+        INSERT INTO public.categories (name, code, asset_type, is_consumable, parent_id)
+        SELECT v.name, v.code, 'tangible', false,
+               (SELECT id FROM public.categories WHERE code = 'CLS-IT-EXT')
+        FROM (VALUES
+            ('Monitor / Display', 'EXT-MONITOR'),
+            ('Router', 'EXT-ROUTER'),
+            ('Network Switch', 'EXT-SWITCH'),
+            ('Access Point / WiFi', 'EXT-AP'),
+            ('Modem', 'EXT-MODEM'),
+            ('Docking Station', 'EXT-DOCK'),
+            ('Projector', 'EXT-PROJECTOR'),
+            ('Peripheral (KB/Mouse/Webcam)', 'EXT-PERIPHERAL'),
+            ('Biometric Device', 'EXT-BIOMETRIC'),
+            ('IP Phone / EPABX / Intercom', 'EXT-IPPHONE'),
+            ('Rack / Network Cabinet', 'EXT-RACK'),
+            ('Inverter / Power Backup', 'EXT-INVERTER'),
+            ('SIM / Data Card / Dongle', 'EXT-SIM')
+        ) AS v(name, code)
+        WHERE NOT EXISTS (SELECT 1 FROM public.categories c WHERE c.code = v.code);
+
+        -- Software / Cloud / Digital children
+        INSERT INTO public.categories (name, code, asset_type, is_consumable, parent_id)
+        SELECT v.name, v.code, 'intangible', false,
+               (SELECT id FROM public.categories WHERE code = 'CLS-IT-EXT')
+        FROM (VALUES
+            ('Operating System License', 'EXT-OS'),
+            ('Database License', 'EXT-DB'),
+            ('Cloud Subscription', 'EXT-CLOUD'),
+            ('SaaS Subscription', 'EXT-SAAS'),
+            ('SSL Certificate', 'EXT-SSL'),
+            ('Domain Name', 'EXT-DOMAIN'),
+            ('VPN License', 'EXT-VPN'),
+            ('Internet / ISP Connection', 'EXT-INTERNET')
+        ) AS v(name, code)
+        WHERE NOT EXISTS (SELECT 1 FROM public.categories c WHERE c.code = v.code);
+
+    EXCEPTION WHEN OTHERS THEN
+        EXECUTE 'ALTER TABLE public.categories ENABLE TRIGGER USER';
+        RAISE;
+    END;
+
+    EXECUTE 'ALTER TABLE public.categories ENABLE TRIGGER USER';
+END $$;
+
 -- ============================================================
 -- VERIFY
 --   SELECT unnest(enum_range(NULL::public.asset_subtype));   -- new types present

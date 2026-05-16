@@ -105,12 +105,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Row */}
+      {/* KPI Row — each card links to its detail view */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard title={t("dashboard.totalAssets")} value={total} subtitle={t("dashboard.allLocations")} icon={Package} gradient="kpi-gradient-1" />
-        <KpiCard title={t("dashboard.allocated")} value={allocated} subtitle={total > 0 ? t("dashboard.utilization", { percent: Math.round(allocated / total * 100) }) : '—'} icon={Monitor} gradient="kpi-gradient-2" />
-        <KpiCard title={t("nav.employees")} value={stats?.employeeCount || 0} subtitle={`${stats?.locationCount || 0} ${t("nav.locations").toLowerCase()}`} icon={Users} gradient="kpi-gradient-3" />
-        <KpiCard title={t("dashboard.totalValue")} value={`₹${(totalValue / 100000).toFixed(1)}L`} subtitle={`${stats?.licenseCount || 0} ${t("nav.licenses").toLowerCase()}`} icon={TrendingUp} gradient="kpi-gradient-4" />
+        <KpiCard title={t("dashboard.totalAssets")} value={total} subtitle={t("dashboard.allLocations")} icon={Package} gradient="kpi-gradient-1" onClick={() => navigate("/assets")} />
+        <KpiCard title={t("dashboard.allocated")} value={allocated} subtitle={total > 0 ? t("dashboard.utilization", { percent: Math.round(allocated / total * 100) }) : '—'} icon={Monitor} gradient="kpi-gradient-2" onClick={() => navigate("/assets?status=allocated")} />
+        <KpiCard title={t("nav.employees")} value={stats?.employeeCount || 0} subtitle={`${stats?.locationCount || 0} ${t("nav.locations").toLowerCase()}`} icon={Users} gradient="kpi-gradient-3" onClick={() => navigate("/employees")} />
+        <KpiCard title={t("dashboard.totalValue")} value={`₹${(totalValue / 100000).toFixed(1)}L`} subtitle={`${stats?.licenseCount || 0} ${t("nav.licenses").toLowerCase()}`} icon={TrendingUp} gradient="kpi-gradient-4" onClick={() => navigate("/reports")} />
       </div>
 
       {/* Compact alerts strip — clicking jumps to the full Alerts page */}

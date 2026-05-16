@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import { parseDbError } from "@/lib/supabase-error";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AllocationDialog } from "@/components/AllocationDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +36,13 @@ const SUBTYPES = [
   { value: 'cosec_license',     label: 'Cosec License (Biometric)',class: 'Licenses (Intangible)' },
   { value: 'software_license',  label: 'Other Software License',   class: 'Licenses (Intangible)' },
   { value: 'email_account',     label: 'Email Account',            class: 'Licenses (Intangible)' },
+  { value: 'os_license',        label: 'Operating System License', class: 'Licenses (Intangible)' },
+  { value: 'database_license',  label: 'Database License',         class: 'Licenses (Intangible)' },
+  { value: 'cloud_subscription',label: 'Cloud Subscription',       class: 'Licenses (Intangible)' },
+  { value: 'saas_subscription', label: 'SaaS Subscription',        class: 'Licenses (Intangible)' },
+  { value: 'ssl_certificate',   label: 'SSL Certificate',          class: 'Licenses (Intangible)' },
+  { value: 'domain',            label: 'Domain Name',              class: 'Licenses (Intangible)' },
+  { value: 'vpn_license',       label: 'VPN License',              class: 'Licenses (Intangible)' },
   // ── Tangible Asset ──
   { value: 'server',            label: 'Server',                   class: 'Tangible' },
   { value: 'qnap',              label: 'Q-NAP',                    class: 'Tangible' },
@@ -45,13 +52,27 @@ const SUBTYPES = [
   { value: 'scanner',           label: 'Scanner',                  class: 'Tangible' },
   { value: 'mobile_device',     label: 'Mobile Device',            class: 'Tangible' },
   { value: 'tablet',            label: 'Tablet',                   class: 'Tangible' },
+  { value: 'monitor',           label: 'Monitor / Display',        class: 'Tangible' },
+  { value: 'projector',         label: 'Projector',                class: 'Tangible' },
+  { value: 'docking_station',   label: 'Docking Station',          class: 'Tangible' },
+  { value: 'peripheral',        label: 'Peripheral (KB/Mouse/Webcam)', class: 'Tangible' },
+  { value: 'biometric_device',  label: 'Biometric Device',         class: 'Tangible' },
+  { value: 'rack',              label: 'Rack / Network Cabinet',   class: 'Tangible' },
+  { value: 'inverter',          label: 'Inverter / Power Backup',  class: 'Tangible' },
   // ── Allied Asset ──
   { value: 'backup_drive',      label: 'Backup / Additional Drive',class: 'Allied' },
   { value: 'firewall',          label: 'Firewall',                 class: 'Allied' },
   { value: 'pen_drive',         label: 'Pen Drive',                class: 'Allied' },
   { value: 'cctv',              label: 'CCTV Setup',               class: 'Allied' },
   { value: 'video_conferencing',label: 'Video Conferencing Device',class: 'Allied' },
-  { value: 'networking',        label: 'Networking',               class: 'Allied' },
+  { value: 'networking',        label: 'Networking (generic)',     class: 'Allied' },
+  { value: 'router',            label: 'Router',                   class: 'Allied' },
+  { value: 'switch',            label: 'Network Switch',           class: 'Allied' },
+  { value: 'access_point',      label: 'Access Point / WiFi',      class: 'Allied' },
+  { value: 'modem',             label: 'Modem',                    class: 'Allied' },
+  { value: 'ip_phone',          label: 'IP Phone / EPABX / Intercom', class: 'Allied' },
+  { value: 'internet_connection',label: 'Internet / ISP Connection',class: 'Allied' },
+  { value: 'sim_card',          label: 'SIM / Data Card / Dongle', class: 'Allied' },
   { value: 'ups',               label: 'UPS',                      class: 'Allied' },
   // ── Equipment ──
   { value: 'television',        label: 'Television',               class: 'Equipment' },
@@ -150,8 +171,13 @@ export default function AssetsPage() {
   const [allocAsset, setAllocAsset] = useState<any | null>(null);
   const [allocMode, setAllocMode] = useState<"allocation" | "return" | "transfer">("allocation");
 
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  // Honour ?status=allocated etc. when navigated here from a Dashboard KPI card
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const s = searchParams.get("status");
+    return s && STATUSES.includes(s) ? s : "all";
+  });
   const [subtypeFilter, setSubtypeFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
