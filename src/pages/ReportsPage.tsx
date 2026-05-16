@@ -628,25 +628,61 @@ function ExpiryReport() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CATEGORIES REPORT - 16 Category Cards with Asset Counts
+// CATEGORIES REPORT — mirrors the official asset taxonomy 1:1
+//   1. Fixed Asset · Intangible (Licenses)
+//   2. Tangible Asset
+//   3. Allied Asset
+//   4. Equipment
 // ═══════════════════════════════════════════════════════════════════════════════
+const sub = (a: any) => a.asset_subtype as string;
+const nameHas = (a: any, ...w: string[]) =>
+  w.some(x => (a.name ?? "").toLowerCase().includes(x) || (a.specifications ?? "").toLowerCase().includes(x));
+
 const CATEGORY_DEFINITIONS = [
-  { id: 1, category: "IT Assets", description: "Laptops", coverage: "All Locations", icon: Laptop, filter: (a: any) => a.asset_subtype === 'laptop', color: "bg-blue-500" },
-  { id: 2, category: "IT Assets", description: "Desktops", coverage: "All Locations", icon: Monitor, filter: (a: any) => a.asset_subtype === 'desktop', color: "bg-blue-600" },
-  { id: 3, category: "IT Assets", description: "Allied", coverage: "MUMBAI", icon: FileCode, filter: (a: any) => a.asset_subtype === 'other' && a.current_location_id?.includes('mumbai'), color: "bg-blue-700" },
-  { id: 4, category: "User Management", description: "Email Accounts", coverage: "All Locations", icon: Mail, filter: (a: any) => a.asset_subtype === 'email_account', color: "bg-purple-500" },
-  { id: 5, category: "Software", description: "Antivirus", coverage: "All Locations", icon: Shield, filter: (a: any) => a.asset_subtype === 'antivirus', color: "bg-green-500" },
-  { id: 6, category: "Software", description: "Office 365", coverage: "All Locations", icon: FileText, filter: (a: any) => a.asset_subtype === 'software_license' && (a.name?.toLowerCase().includes('office') || a.license_key?.toLowerCase().includes('microsoft')), color: "bg-green-600" },
-  { id: 7, category: "Software", description: "SAP Licenses", coverage: "All Locations", icon: FileCode, filter: (a: any) => a.asset_subtype === 'sap_license', color: "bg-green-700" },
-  { id: 8, category: "Remote Access", description: "TS Plus (GEM, KPL - Support Team)", coverage: "Created Users", icon: Globe, filter: (a: any) => a.asset_subtype === 'other' && a.name?.toLowerCase().includes('ts plus'), color: "bg-indigo-500" },
-  { id: 9, category: "Network & Security", description: "Firewall", coverage: "All Locations", icon: Shield, filter: (a: any) => a.asset_subtype === 'networking' && a.name?.toLowerCase().includes('firewall'), color: "bg-red-500" },
-  { id: 10, category: "Network & Security", description: "Network Infrastructure", coverage: "All Locations", icon: Network, filter: (a: any) => a.asset_subtype === 'networking', color: "bg-red-600" },
-  { id: 11, category: "Surveillance", description: "CCTV Cameras", coverage: "All Locations", icon: Camera, filter: (a: any) => a.asset_subtype === 'other' && a.name?.toLowerCase().includes('cctv'), color: "bg-orange-500" },
-  { id: 12, category: "Connectivity", description: "Internet Connections", coverage: "All Locations", icon: Wifi, filter: (a: any) => a.asset_subtype === 'other' && (a.name?.toLowerCase().includes('internet') || a.name?.toLowerCase().includes('broadband')), color: "bg-cyan-500" },
-  { id: 13, category: "Communication", description: "IP Phones & Intercom", coverage: "All Locations", icon: Phone, filter: (a: any) => a.asset_subtype === 'other' && (a.name?.toLowerCase().includes('phone') || a.name?.toLowerCase().includes('intercom') || a.name?.toLowerCase().includes('ip phone')), color: "bg-teal-500" },
-  { id: 14, category: "Mobile Devices", description: "Company Mobiles", coverage: "All Locations", icon: Key, filter: (a: any) => a.asset_subtype === 'mobile_device' || a.asset_subtype === 'tablet', color: "bg-pink-500" },
-  { id: 15, category: "Servers & Infrastructure", description: "Servers", coverage: "All Locations", icon: Server, filter: (a: any) => a.asset_subtype === 'server', color: "bg-amber-600" },
-  { id: 16, category: "Domain", description: "Domain Management", coverage: "All Company", icon: Globe, filter: (a: any) => a.asset_subtype === 'other' && (a.name?.toLowerCase().includes('domain') || a.specifications?.toLowerCase().includes('domain')), color: "bg-violet-600" },
+  // ── 1. Fixed Asset · Intangible (Licenses) ──
+  { id: 1,  category: "Fixed Asset · Intangible", description: "Microsoft Office License", coverage: "All Locations", icon: FileText, color: "bg-violet-500",
+    filter: (a: any) => sub(a) === 'ms_office_license' || (sub(a) === 'software_license' && nameHas(a, 'office', 'microsoft', 'o365', '365')) },
+  { id: 2,  category: "Fixed Asset · Intangible", description: "SAP License", coverage: "All Locations", icon: FileCode, color: "bg-violet-600",
+    filter: (a: any) => sub(a) === 'sap_license' },
+  { id: 3,  category: "Fixed Asset · Intangible", description: "Gmail License", coverage: "All Locations", icon: Mail, color: "bg-violet-700",
+    filter: (a: any) => sub(a) === 'gmail_license' || (sub(a) === 'email_account' && nameHas(a, 'gmail', 'google')) },
+  { id: 4,  category: "Fixed Asset · Intangible", description: "Antivirus License", coverage: "All Locations", icon: Shield, color: "bg-purple-500",
+    filter: (a: any) => sub(a) === 'antivirus' },
+  { id: 5,  category: "Fixed Asset · Intangible", description: "RDP License", coverage: "All Locations", icon: Globe, color: "bg-purple-600",
+    filter: (a: any) => sub(a) === 'rdp_license' || nameHas(a, 'rdp', 'remote desktop', 'ts plus') },
+  { id: 6,  category: "Fixed Asset · Intangible", description: "Cosec License (Biometric)", coverage: "All Locations", icon: Key, color: "bg-purple-700",
+    filter: (a: any) => sub(a) === 'cosec_license' || nameHas(a, 'cosec', 'biometric') },
+  // ── 2. Tangible Asset ──
+  { id: 7,  category: "Tangible Asset", description: "Server", coverage: "All Locations", icon: Server, color: "bg-blue-600",
+    filter: (a: any) => sub(a) === 'server' },
+  { id: 8,  category: "Tangible Asset", description: "Q-NAP", coverage: "All Locations", icon: Server, color: "bg-blue-700",
+    filter: (a: any) => sub(a) === 'qnap' || nameHas(a, 'qnap', 'q-nap', 'nas') },
+  { id: 9,  category: "Tangible Asset", description: "Laptop", coverage: "All Locations", icon: Laptop, color: "bg-blue-500",
+    filter: (a: any) => sub(a) === 'laptop' },
+  { id: 10, category: "Tangible Asset", description: "Desktop", coverage: "All Locations", icon: Monitor, color: "bg-sky-600",
+    filter: (a: any) => sub(a) === 'desktop' },
+  { id: 11, category: "Tangible Asset", description: "Printer", coverage: "All Locations", icon: FileText, color: "bg-sky-500",
+    filter: (a: any) => sub(a) === 'printer' || sub(a) === 'scanner' },
+  // ── 3. Allied Asset ──
+  { id: 12, category: "Allied Asset", description: "Backup & Additional Drives", coverage: "All Locations", icon: Server, color: "bg-amber-600",
+    filter: (a: any) => sub(a) === 'backup_drive' || nameHas(a, 'backup drive', 'additional drive', 'hdd', 'ssd') },
+  { id: 13, category: "Allied Asset", description: "Firewall", coverage: "All Locations", icon: Shield, color: "bg-red-600",
+    filter: (a: any) => sub(a) === 'firewall' || (sub(a) === 'networking' && nameHas(a, 'firewall')) },
+  { id: 14, category: "Allied Asset", description: "Pen Drives", coverage: "All Locations", icon: Key, color: "bg-orange-500",
+    filter: (a: any) => sub(a) === 'pen_drive' || nameHas(a, 'pen drive', 'pendrive', 'usb drive') },
+  { id: 15, category: "Allied Asset", description: "CCTV Setup", coverage: "All Locations", icon: Camera, color: "bg-orange-600",
+    filter: (a: any) => sub(a) === 'cctv' || nameHas(a, 'cctv', 'camera', 'dvr', 'nvr') },
+  { id: 16, category: "Allied Asset", description: "Video Conferencing Device", coverage: "All Locations", icon: Phone, color: "bg-teal-600",
+    filter: (a: any) => sub(a) === 'video_conferencing' || nameHas(a, 'video conferenc', 'conference cam', 'polycom') },
+  // ── 4. Equipment ──
+  { id: 17, category: "Equipment", description: "Television", coverage: "All Locations", icon: Monitor, color: "bg-green-600",
+    filter: (a: any) => sub(a) === 'television' || nameHas(a, 'television', ' tv ', 'led tv', 'smart tv') },
+  { id: 18, category: "Equipment", description: "Air Conditioner", coverage: "All Locations", icon: Wifi, color: "bg-green-500",
+    filter: (a: any) => sub(a) === 'air_conditioner' || nameHas(a, 'air conditioner', ' ac ', 'split ac', 'window ac') },
+  { id: 19, category: "Equipment", description: "Water Purifier", coverage: "All Locations", icon: Wifi, color: "bg-emerald-600",
+    filter: (a: any) => sub(a) === 'water_purifier' || nameHas(a, 'water purifier', 'ro ', 'aquaguard') },
+  { id: 20, category: "Equipment", description: "Pressure Pump", coverage: "All Locations", icon: Network, color: "bg-emerald-700",
+    filter: (a: any) => sub(a) === 'pressure_pump' || nameHas(a, 'pressure pump', 'water pump', 'booster pump') },
 ];
 
 function CategoriesReport(_props: any) {
@@ -777,6 +813,111 @@ function CategoriesReport(_props: any) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// AVAILABLE INVENTORY REPORT — "Free available Inventory of Any Asset"
+// Unallocated/available stock grouped by asset type, then by location.
+// ═══════════════════════════════════════════════════════════════════════════════
+function AvailableInventoryReport({ locations }: any) {
+  const { data: assets = [] } = useAssets();
+  const [locationFilter, setLocationFilter] = useState("all");
+
+  const available = useMemo(
+    () => (assets as any[]).filter(a =>
+      a.status === "available" &&
+      (locationFilter === "all" || a.current_location_id === locationFilter)
+    ),
+    [assets, locationFilter],
+  );
+
+  // Group available stock by subtype
+  const byType = useMemo(() => {
+    const labelFor = (s: string) =>
+      CATEGORY_DEFINITIONS.find(c => c.filter({ asset_subtype: s }))?.description
+      ?? (s ? s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "Unspecified");
+    const groups: Record<string, { type: string; count: number; value: number; locations: Set<string> }> = {};
+    available.forEach((a: any) => {
+      const key = labelFor(a.asset_subtype);
+      if (!groups[key]) groups[key] = { type: key, count: 0, value: 0, locations: new Set() };
+      groups[key].count++;
+      groups[key].value += Number(a.purchase_cost) || 0;
+      if (a.locations?.name) groups[key].locations.add(a.locations.name);
+    });
+    return Object.values(groups).sort((a, b) => b.count - a.count);
+  }, [available]);
+
+  const totalValue = byType.reduce((s, g) => s + g.value, 0);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold">Free / Available Inventory</h2>
+          <p className="text-muted-foreground text-sm">
+            {available.length} unallocated asset{available.length === 1 ? "" : "s"} ready to issue, across {byType.length} type{byType.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <Select value={locationFilter} onValueChange={setLocationFilter}>
+            <SelectTrigger className="h-9 w-[180px]"><SelectValue placeholder="All locations" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All locations</SelectItem>
+              {(locations as any[]).map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={() => exportCSV("available-inventory",
+            ["Asset Type", "Available Qty", "Locations", "Total Value"],
+            byType.map(g => [g.type, g.count, Array.from(g.locations).join(", ") || "—", `₹${g.value.toLocaleString()}`])
+          )}><Download className="h-3.5 w-3.5 mr-1" /> CSV</Button>
+          <Button size="sm" variant="outline" onClick={() => exportPDF("Available Inventory",
+            ["Asset Type", "Available Qty", "Locations", "Total Value"],
+            byType.map(g => [g.type, g.count, Array.from(g.locations).join(", ") || "—", `₹${g.value.toLocaleString()}`])
+          )}><FileText className="h-3.5 w-3.5 mr-1" /> PDF</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <StatCard label="Available Units" value={available.length} />
+        <StatCard label="Distinct Types" value={byType.length} />
+        <StatCard label="Idle Value" value={`₹${totalValue.toLocaleString()}`} />
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/30">
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase">Asset Type</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground text-xs uppercase">Available Qty</th>
+                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs uppercase">Locations</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted-foreground text-xs uppercase">Total Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {byType.map(g => (
+                  <tr key={g.type} className="border-b border-border/50 hover:bg-muted/20">
+                    <td className="py-3 px-4 font-medium">{g.type}</td>
+                    <td className="py-3 px-4 text-right">
+                      <Badge variant="secondary" className="tabular-nums">{g.count}</Badge>
+                    </td>
+                    <td className="py-3 px-4 text-muted-foreground text-xs">{Array.from(g.locations).join(", ") || "—"}</td>
+                    <td className="py-3 px-4 text-right tabular-nums">₹{g.value.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {byType.length === 0 && (
+                  <tr><td colSpan={4} className="py-10 text-center text-muted-foreground">
+                    No available (unallocated) assets{locationFilter !== "all" ? " at this location" : ""}.
+                  </td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // PAGE ROOT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function ReportsPage() {
@@ -807,6 +948,7 @@ export default function ReportsPage() {
             <>
               <TabsTrigger value="assets"><Package className="h-4 w-4 mr-1" /> Asset Register</TabsTrigger>
               <TabsTrigger value="categories"><LayoutGrid className="h-4 w-4 mr-1" /> Categories</TabsTrigger>
+              <TabsTrigger value="available"><Package className="h-4 w-4 mr-1" /> Available Inventory</TabsTrigger>
               <TabsTrigger value="summary"><FileText className="h-4 w-4 mr-1" /> Summary</TabsTrigger>
               <TabsTrigger value="expiry"><AlertTriangle className="h-4 w-4 mr-1" /> Expiry Alerts</TabsTrigger>
             </>
@@ -823,6 +965,9 @@ export default function ReportsPage() {
             </TabsContent>
             <TabsContent value="categories" className="mt-4">
               <CategoriesReport companies={companies} departments={departments} locations={locations} employees={employees} />
+            </TabsContent>
+            <TabsContent value="available" className="mt-4">
+              <AvailableInventoryReport locations={locations} />
             </TabsContent>
             <TabsContent value="summary" className="mt-4">
               <SummaryReport companies={companies} departments={departments} locations={locations} />

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useAssets, useEmployees, useLocations, useVendors, useCategories, useCompanies, useDepartments, useCreateAsset, useUpdateAsset, useDeleteAsset } from "@/hooks/useSupabaseData";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Package, ChevronDown, ChevronUp, Plus, Loader2, Filter, X, Eye, Download, UserCheck, UserX, ArrowRightLeft, Trash2, AlertTriangle, Pencil } from "lucide-react";
 import { exportAssetReport } from "@/lib/pdf";
@@ -23,22 +23,63 @@ import { useTranslation } from "react-i18next";
 
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const STATUSES = ['available', 'allocated', 'under_maintenance', 'lost', 'damaged', 'scrapped'];
+// Ordered by the official asset taxonomy (see SETUP_ASSET_TAXONOMY.sql):
+// Intangible / Licenses → Tangible → Allied → Equipment → misc.
+// The "class" field drives grouping in the Select dropdown.
 const SUBTYPES = [
-  { value: 'laptop', label: 'Laptop' },
-  { value: 'desktop', label: 'Desktop' },
-  { value: 'printer', label: 'Printer' },
-  { value: 'scanner', label: 'Scanner' },
-  { value: 'server', label: 'Server' },
-  { value: 'mobile_device', label: 'Mobile Device' },
-  { value: 'tablet', label: 'Tablet' },
-  { value: 'antivirus', label: 'Antivirus' },
-  { value: 'email_account', label: 'Email Account' },
-  { value: 'sap_license', label: 'SAP License' },
-  { value: 'software_license', label: 'Software License' },
-  { value: 'networking', label: 'Networking' },
-  { value: 'ups', label: 'UPS' },
-  { value: 'other', label: 'Other' },
+  // ── Fixed Asset · Intangible (Licenses) ──
+  { value: 'ms_office_license', label: 'Microsoft Office License', class: 'Licenses (Intangible)' },
+  { value: 'sap_license',       label: 'SAP License',              class: 'Licenses (Intangible)' },
+  { value: 'gmail_license',     label: 'Gmail License',            class: 'Licenses (Intangible)' },
+  { value: 'antivirus',         label: 'Antivirus License',        class: 'Licenses (Intangible)' },
+  { value: 'rdp_license',       label: 'RDP License',              class: 'Licenses (Intangible)' },
+  { value: 'cosec_license',     label: 'Cosec License (Biometric)',class: 'Licenses (Intangible)' },
+  { value: 'software_license',  label: 'Other Software License',   class: 'Licenses (Intangible)' },
+  { value: 'email_account',     label: 'Email Account',            class: 'Licenses (Intangible)' },
+  // ── Tangible Asset ──
+  { value: 'server',            label: 'Server',                   class: 'Tangible' },
+  { value: 'qnap',              label: 'Q-NAP',                    class: 'Tangible' },
+  { value: 'laptop',            label: 'Laptop',                   class: 'Tangible' },
+  { value: 'desktop',           label: 'Desktop',                  class: 'Tangible' },
+  { value: 'printer',           label: 'Printer',                  class: 'Tangible' },
+  { value: 'scanner',           label: 'Scanner',                  class: 'Tangible' },
+  { value: 'mobile_device',     label: 'Mobile Device',            class: 'Tangible' },
+  { value: 'tablet',            label: 'Tablet',                   class: 'Tangible' },
+  // ── Allied Asset ──
+  { value: 'backup_drive',      label: 'Backup / Additional Drive',class: 'Allied' },
+  { value: 'firewall',          label: 'Firewall',                 class: 'Allied' },
+  { value: 'pen_drive',         label: 'Pen Drive',                class: 'Allied' },
+  { value: 'cctv',              label: 'CCTV Setup',               class: 'Allied' },
+  { value: 'video_conferencing',label: 'Video Conferencing Device',class: 'Allied' },
+  { value: 'networking',        label: 'Networking',               class: 'Allied' },
+  { value: 'ups',               label: 'UPS',                      class: 'Allied' },
+  // ── Equipment ──
+  { value: 'television',        label: 'Television',               class: 'Equipment' },
+  { value: 'air_conditioner',   label: 'Air Conditioner',          class: 'Equipment' },
+  { value: 'water_purifier',    label: 'Water Purifier',           class: 'Equipment' },
+  { value: 'pressure_pump',     label: 'Pressure Pump',            class: 'Equipment' },
+  // ── Fallback ──
+  { value: 'other',             label: 'Other',                    class: 'Other' },
 ];
+
+// Render SUBTYPES grouped by their asset class (keeps the 28-item list scannable)
+const SUBTYPE_CLASSES = ['Licenses (Intangible)', 'Tangible', 'Allied', 'Equipment', 'Other'] as const;
+function SubtypeOptions() {
+  return (
+    <>
+      {SUBTYPE_CLASSES.map(cls => {
+        const items = SUBTYPES.filter(s => s.class === cls);
+        if (items.length === 0) return null;
+        return (
+          <SelectGroup key={cls}>
+            <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">{cls}</SelectLabel>
+            {items.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+          </SelectGroup>
+        );
+      })}
+    </>
+  );
+}
 
 const QUICK_FILTERS = [
   { label: 'All Assets', status: 'all', subtype: 'all' },
@@ -298,7 +339,7 @@ export default function AssetsPage() {
                 <Label>Asset Type *</Label>
                 <Select value={form.asset_subtype} onValueChange={v => setForm(f => ({ ...f, asset_subtype: v as any }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{SUBTYPES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                  <SelectContent><SubtypeOptions /></SelectContent>
                 </Select>
               </div>
               <div><Label>SAP Code *</Label><Input value={form.sap_code} onChange={e => setForm(f => ({ ...f, sap_code: e.target.value }))} placeholder="MCD-31" /></div>
@@ -433,7 +474,7 @@ export default function AssetsPage() {
                     <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All</SelectItem>
-                      {SUBTYPES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                      <SubtypeOptions />
                     </SelectContent>
                   </Select>
                 </div>
