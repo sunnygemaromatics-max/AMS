@@ -16,6 +16,8 @@ import {
   BarChart3,
   QrCode,
   BellRing,
+  KeyRound,
+  Wrench,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -42,6 +44,7 @@ const mainNav = [
   { key: "binCards", url: "/bin-cards", icon: CreditCard },
   { key: "employees", url: "/employees", icon: Users },
   { key: "licenses", url: "/licenses", icon: Key },
+  { key: "credentials", url: "/credentials", icon: KeyRound },
   { key: "alerts", url: "/alerts", icon: BellRing },
 ];
 
@@ -63,6 +66,7 @@ const systemNav = [
 const adminNav = [
   { key: "users", url: "/users", icon: Shield },
   { key: "rules", url: "/rules", icon: ShieldCheck },
+  { key: "fieldDefinitions", url: "/field-definitions", icon: Wrench },
 ];
 
 export function AppSidebar() {

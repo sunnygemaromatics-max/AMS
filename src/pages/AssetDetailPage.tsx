@@ -1,14 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useAsset, useAssetTransactions } from "@/hooks/useSupabaseData";
+import { useAsset, useAssetTransactions, useSubAssets } from "@/hooks/useSupabaseData";
+import { useAssetCredentials, useAssetCredentialCount } from "@/hooks/useCredentials";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Package, Printer, CreditCard, History, FileText, Loader2, Download, UserCheck, ArrowRightLeft, UserX } from "lucide-react";
+import { ArrowLeft, Package, Printer, CreditCard, History, FileText, Loader2, Download, UserCheck, ArrowRightLeft, UserX, KeyRound, Plus, Eye, EyeOff, Lock, ExternalLink, ChevronRight } from "lucide-react";
 import { exportBinCard } from "@/lib/pdf";
 import { AllocationDialog } from "@/components/AllocationDialog";
+import { CredentialDialog } from "@/components/CredentialDialog";
 import { useAuth } from "@/contexts/AuthContext";
 
 type Mode = "allocation" | "return" | "transfer";
@@ -82,6 +84,8 @@ export default function AssetDetailPage() {
       <Tabs defaultValue="details">
         <TabsList>
           <TabsTrigger value="details"><FileText className="h-4 w-4 mr-1" /> Details</TabsTrigger>
+          <TabsTrigger value="subassets"><Package className="h-4 w-4 mr-1" /> Sub-assets</TabsTrigger>
+          <TabsTrigger value="credentials"><KeyRound className="h-4 w-4 mr-1" /> Credentials</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-1" /> Transaction History</TabsTrigger>
           <TabsTrigger value="bincard"><CreditCard className="h-4 w-4 mr-1" /> Bin Card</TabsTrigger>
         </TabsList>
@@ -156,6 +160,14 @@ export default function AssetDetailPage() {
               <CardContent><p className="text-sm text-muted-foreground">{asset.notes}</p></CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="subassets" className="mt-4">
+          <SubAssetsSection parentAssetId={asset.id} parentName={asset.name} />
+        </TabsContent>
+
+        <TabsContent value="credentials" className="mt-4">
+          <CredentialsSection assetId={asset.id} />
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
@@ -245,5 +257,160 @@ export default function AssetDetailPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ── Sub-assets section ─────────────────────────────────────────────────────
+function SubAssetsSection({ parentAssetId, parentName }: { parentAssetId: string; parentName: string }) {
+  const navigate = useNavigate();
+  const { data: subs = [], isLoading } = useSubAssets(parentAssetId);
+  const { canWrite } = useAuth();
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <div>
+          <CardTitle className="text-sm">Sub-assets of {parentName}</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            Components, drives, modules or accessories that belong to this asset.
+          </p>
+        </div>
+        {canWrite && (
+          <Button size="sm" onClick={() => navigate(`/assets?parent=${parentAssetId}`)}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add sub-asset
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" /></div>
+        ) : subs.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            No sub-assets yet. Use the Add Sub-asset button to attach components to this asset.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border/50">
+            {(subs as any[]).map((s) => (
+              <li
+                key={s.id}
+                onClick={() => navigate(`/assets/${s.id}`)}
+                className="py-3 flex items-center gap-3 cursor-pointer hover:bg-muted/30 -mx-3 px-3 rounded-md transition-colors"
+              >
+                <Package className="h-4 w-4 text-accent shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{s.name}</p>
+                  <p className="text-xs text-muted-foreground font-mono">{s.sap_code} · Bin #{s.bin_card_no}</p>
+                </div>
+                <Badge variant="outline" className="text-[10px]">{(s.asset_subtype || 'other').replace(/_/g, ' ')}</Badge>
+                <StatusBadge status={s.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Credentials section (admin/IT only — RLS-gated) ────────────────────────
+function CredentialsSection({ assetId }: { assetId: string }) {
+  const { roles } = useAuth();
+  const canViewCredentials = roles.includes("admin") || roles.includes("it");
+  const { data: creds = [], isLoading } = useAssetCredentials(canViewCredentials ? assetId : null);
+  const { data: count = 0 } = useAssetCredentialCount(assetId);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+
+  if (!canViewCredentials) {
+    return (
+      <Card className="border-amber-200/60 bg-amber-50/30 dark:bg-amber-900/10 dark:border-amber-900/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Lock className="h-4 w-4 text-amber-600" /> Restricted
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm">
+            {count > 0
+              ? <>This asset has <strong>{count}</strong> stored credential{count === 1 ? "" : "s"}. Only Admin and IT roles can view or edit passwords.</>
+              : <>No credentials stored on this asset. Only Admin and IT roles can manage credentials.</>}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <div>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-accent" /> Credentials
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Stored passwords for this asset (Admin / IT only).
+            </p>
+          </div>
+          <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true); }}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add credential
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" /></div>
+          ) : creds.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No credentials stored yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {creds.map((c) => (
+                <CredentialRow key={c.id} credential={c} onEdit={() => { setEditing(c); setDialogOpen(true); }} />
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+      <CredentialDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        credential={editing}
+        defaultAssetId={assetId}
+      />
+    </>
+  );
+}
+
+function CredentialRow({ credential, onEdit }: { credential: any; onEdit: () => void }) {
+  const [reveal, setReveal] = useState(false);
+  return (
+    <li className="flex items-center gap-3 rounded-lg border bg-card p-3">
+      <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+        <KeyRound className="h-4 w-4 text-accent" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm truncate">{credential.name}</p>
+          <Badge variant="outline" className="text-[10px] uppercase">{credential.credential_type}</Badge>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+          {credential.username && <span className="font-mono">{credential.username}</span>}
+          {credential.password && (
+            <span className="font-mono">
+              {reveal ? credential.password : "•".repeat(Math.min(credential.password.length, 10))}
+            </span>
+          )}
+          {credential.url && (
+            <a href={credential.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-accent">
+              <ExternalLink className="h-3 w-3" /> link
+            </a>
+          )}
+        </div>
+      </div>
+      <Button variant="ghost" size="sm" onClick={() => setReveal((r) => !r)} title={reveal ? "Hide" : "Reveal"}>
+        {reveal ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onEdit}>Edit</Button>
+    </li>
   );
 }

@@ -95,6 +95,28 @@ export function useAsset(id: string) {
   });
 }
 
+/** Sub-assets (children) of a given parent asset. */
+export function useSubAssets(parentId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["assets", "children", parentId],
+    queryFn: async () => {
+      if (!parentId) return [];
+      // parent_asset_id column was added by 20260527000000_sub_assets.sql but
+      // is not yet in the generated Database types. Cast the whole builder
+      // through `any` to bypass the chain-depth resolution that breaks here.
+      const { data, error } = await (supabase as any)
+        .from("assets")
+        .select(ASSET_EMBED)
+        .eq("is_deleted", false)
+        .eq("parent_asset_id", parentId)
+        .order("bin_card_no");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!parentId,
+  });
+}
+
 export function useCreateAsset() {
   const qc = useQueryClient();
   return useMutation({

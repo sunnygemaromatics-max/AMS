@@ -20,6 +20,8 @@ import { AllocationDialog } from "@/components/AllocationDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { DynamicCustomFields } from "@/components/DynamicCustomFields";
+import { useEffect } from "react";
 
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 const STATUSES = ['available', 'allocated', 'under_maintenance', 'lost', 'damaged', 'scrapped'];
@@ -189,6 +191,12 @@ export default function AssetsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  const parentFromUrl = searchParams.get("parent");
+  // Auto-open create dialog when arrived via /assets?parent=<id> (sub-asset entry point)
+  useEffect(() => {
+    if (parentFromUrl) setShowCreate(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parentFromUrl]);
   const initialForm = {
     sap_code: '', name: '', bin_card_no: 0, system_info: '', serial_number: '',
     brand: '', model: '', purchase_date: '', purchase_bill_no: '', purchase_cost: '',
@@ -197,6 +205,8 @@ export default function AssetsPage() {
     status: 'available' as any, notes: '', warranty_start: '', warranty_end: '',
     asset_subtype: 'other' as any, imei: '', imei2: '', mobile_number: '', sim_provider: '',
     license_key: '', specifications: '',
+    parent_asset_id: parentFromUrl ?? '',
+    custom_fields: {} as Record<string, unknown>,
   };
   const [form, setForm] = useState(initialForm);
 
@@ -264,7 +274,9 @@ export default function AssetsPage() {
         imei: form.imei || null, imei2: form.imei2 || null,
         mobile_number: form.mobile_number || null, sim_provider: form.sim_provider || null,
         license_key: form.license_key || null, specifications: form.specifications || null,
-      });
+        parent_asset_id: form.parent_asset_id || null,
+        custom_fields: form.custom_fields ?? {},
+      } as any);
       toast({ title: "Success", description: "Asset created successfully" });
       setShowCreate(false);
       setForm(initialForm);
@@ -303,6 +315,8 @@ export default function AssetsPage() {
       sim_provider:        asset.sim_provider ?? '',
       license_key:         asset.license_key ?? '',
       specifications:      asset.specifications ?? '',
+      parent_asset_id:     (asset as any).parent_asset_id ?? '',
+      custom_fields:       ((asset as any).custom_fields ?? {}) as Record<string, unknown>,
     });
     setShowCreate(true);  // re-use the create dialog
   };
@@ -331,7 +345,9 @@ export default function AssetsPage() {
         imei: form.imei || null, imei2: form.imei2 || null,
         mobile_number: form.mobile_number || null, sim_provider: form.sim_provider || null,
         license_key: form.license_key || null, specifications: form.specifications || null,
-      });
+        parent_asset_id: form.parent_asset_id || null,
+        custom_fields: form.custom_fields ?? {},
+      } as any);
       toast({ title: "Updated", description: `${form.sap_code} updated` });
       setShowCreate(false);
       setEditing(null);
@@ -437,6 +453,35 @@ export default function AssetsPage() {
                 </>
               )}
               <div className="col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
+
+              {/* Parent asset (optional) — present this asset as a sub-asset of another */}
+              <div className="col-span-2">
+                <Label className="flex items-center gap-1">
+                  Parent asset <span className="text-[10px] text-muted-foreground">(optional — leave blank for top-level)</span>
+                </Label>
+                <Select value={form.parent_asset_id || 'none'} onValueChange={v => setForm(f => ({ ...f, parent_asset_id: v === 'none' ? '' : v }))}>
+                  <SelectTrigger><SelectValue placeholder="No parent — this is a top-level asset" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No parent — this is a top-level asset</SelectItem>
+                    {(assets || [])
+                      .filter((a: any) => a.id !== editing?.id) // can't be your own parent
+                      .map((a: any) => (
+                        <SelectItem key={a.id} value={a.id}>{a.sap_code} — {a.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Admin-defined custom fields (renders if any apply to this subtype) */}
+              <DynamicCustomFields
+                entityType="asset"
+                subtype={form.asset_subtype}
+                values={form.custom_fields ?? {}}
+                onChange={(key, value) => setForm(f => ({
+                  ...f,
+                  custom_fields: { ...(f.custom_fields ?? {}), [key]: value },
+                }))}
+              />
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button variant="outline" onClick={() => { setShowCreate(false); setEditing(null); setForm(initialForm); }}>Cancel</Button>

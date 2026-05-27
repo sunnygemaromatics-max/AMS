@@ -33,6 +33,8 @@ const AuditTrailPage = lazy(() => import("./pages/AuditTrailPage"));
 const QRCodeGenerationPage = lazy(() => import("./pages/QRCodeGenerationPage"));
 const RulesPage = lazy(() => import("./pages/RulesPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
+const CredentialsPage = lazy(() => import("./pages/CredentialsPage"));
+const FieldDefinitionsPage = lazy(() => import("./pages/FieldDefinitionsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +83,8 @@ const App = () => (
                           <Route path="/locations" element={<LocationsPage />} />
                           <Route path="/licenses" element={<LicensesPage />} />
                           <Route path="/alerts" element={<AlertsPage />} />
+                          <Route path="/credentials" element={<CredentialsPage />} />
+                          <Route path="/field-definitions" element={<AdminRoute><FieldDefinitionsPage /></AdminRoute>} />
                           <Route path="/import" element={<ImportPage />} />
                           {/* Old deep-link kept working — redirects to the new merged page on the History tab */}
                           <Route path="/import/history" element={<Navigate to="/import?tab=history" replace />} />
