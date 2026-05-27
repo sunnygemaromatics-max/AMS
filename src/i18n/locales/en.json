@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Asset Management",
-    "tagline": "TSI Asset Management System"
+    "tagline": "Asset Management System"
   },
   "nav": {
     "dashboard": "Dashboard",

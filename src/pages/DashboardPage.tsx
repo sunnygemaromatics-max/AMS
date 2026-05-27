@@ -10,16 +10,16 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 
-// TSI brand palette for charts (purple → magenta → rose → peach + accents)
+// Botanical chart palette: teal → emerald → gold + earthy accents
 const COLORS = [
-  'hsl(265, 55%, 50%)',
-  'hsl(320, 65%, 60%)',
-  'hsl(340, 75%, 65%)',
-  'hsl(20, 85%, 70%)',
-  'hsl(220, 80%, 60%)',
-  'hsl(152, 60%, 45%)',
-  'hsl(35, 95%, 55%)',
-  'hsl(280, 60%, 60%)',
+  'hsl(174, 75%, 32%)',  // deep teal
+  'hsl(165, 70%, 38%)',  // emerald
+  'hsl(48, 90%, 48%)',   // mustard gold
+  'hsl(32, 85%, 55%)',   // warm amber
+  'hsl(200, 80%, 45%)',  // ocean blue accent
+  'hsl(152, 60%, 40%)',  // sage green
+  'hsl(25, 65%, 50%)',   // terracotta
+  'hsl(180, 60%, 40%)',  // muted cyan
 ];
 const statusLabel = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', fontSize: 12 }} />
-                  <Bar dataKey="value" fill="hsl(265 55% 50%)" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" fill="hsl(174 75% 32%)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="text-muted-foreground text-sm text-center py-12">No data yet.</p>}

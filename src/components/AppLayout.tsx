@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { LogOut } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { BrandingLoader } from "@/components/BrandingLoader";
-import { TsiLogo } from "@/components/TsiLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTranslation } from "react-i18next";
@@ -27,10 +26,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <header className="h-16 flex items-center px-4 gap-4 shrink-0 sticky top-0 z-30 glass-strong border-b border-border/50">
               <SidebarTrigger className="hover:bg-primary/10 hover:text-primary transition-colors" />
               <div className="flex items-center gap-2.5 animate-fade-in">
-                <TsiLogo size={32} />
                 <div className="hidden sm:flex flex-col leading-tight">
-                  <span className="font-bold text-sm tsi-gradient-text">{t("app.name")}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">The Studio Infinito</span>
+                  <span className="font-bold text-sm tsi-gradient-text">Gem Aromatics AMS</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("app.name")}</span>
                 </div>
               </div>
               <div className="ml-auto flex items-center gap-1.5">
@@ -76,12 +74,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <footer className="shrink-0 border-t border-border/50 glass px-6 py-3 flex items-center justify-between">
               <span className="text-xs text-muted-foreground flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full tsi-gradient" />
-                AMS v2.0 &mdash; The Studio Infinito
+                AMS v1.0 &mdash; Gem Aromatics
               </span>
               <span className="text-xs text-muted-foreground">
-                Designed &amp; developed by{" "}
-                <span className="font-semibold tsi-gradient-text">Personify Crafters</span>
-                {" "}— All Rights Reserved
+                &copy; Gem Aromatics — All Rights Reserved
               </span>
             </footer>
           </div>

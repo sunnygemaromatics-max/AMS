@@ -145,10 +145,10 @@ export default function AuthPage() {
         <div className="relative">
           <div className="flex items-center gap-3 mb-12 animate-fade-in">
             <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-              <span className="text-white font-black text-sm tracking-tight">TSI</span>
+              <span className="text-white font-black text-sm tracking-tight">GA</span>
             </div>
             <div>
-              <p className="text-white font-bold text-sm">The Studio Infinito</p>
+              <p className="text-white font-bold text-sm">Gem Aromatics</p>
               <p className="text-white/80 text-xs uppercase tracking-wider">Asset Management System</p>
             </div>
           </div>
@@ -170,7 +170,7 @@ export default function AuthPage() {
               <span className="text-white/90 text-sm">{f}</span>
             </div>
           ))}
-          <p className="text-muted-foreground/60 text-xs pt-6">© Personify Crafters – All Rights Reserved</p>
+          <p className="text-white/50 text-xs pt-6">© Gem Aromatics — All Rights Reserved</p>
         </div>
       </div>
 
@@ -181,10 +181,10 @@ export default function AuthPage() {
           {/* Mobile logo */}
           <div className="flex lg:hidden items-center gap-3 mb-8 justify-center">
             <div className="h-10 w-10 rounded-xl tsi-gradient flex items-center justify-center shadow-lg shadow-primary/20">
-              <span className="text-white font-black text-xs">TSI</span>
+              <span className="text-white font-black text-xs">GA</span>
             </div>
             <div>
-              <p className="text-foreground font-bold text-sm">The Studio Infinito</p>
+              <p className="text-foreground font-bold text-sm">Gem Aromatics</p>
               <p className="text-primary text-xs">Asset Management System</p>
             </div>
           </div>
@@ -394,7 +394,7 @@ export default function AuthPage() {
           )}
 
           <p className="text-center text-xs text-muted-foreground/60 mt-10 lg:hidden">
-            © Personify Crafters – All Rights Reserved
+            © Gem Aromatics — All Rights Reserved
           </p>
         </div>
       </div>

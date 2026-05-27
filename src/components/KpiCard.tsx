@@ -19,7 +19,7 @@ export function KpiCard({ title, value, subtitle, icon: Icon, gradient, onClick 
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
       className={`${gradient} rounded-2xl p-6 text-white relative overflow-hidden hover-lift animate-fade-in-up group ${clickable ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/60" : "cursor-default"}`}
-      style={{ boxShadow: "0 10px 30px hsl(265 55% 50% / 0.15)" }}
+      style={{ boxShadow: "0 10px 30px hsl(174 75% 32% / 0.15)" }}
     >
       {clickable && (
         <ArrowUpRight className="absolute top-4 right-4 h-4 w-4 text-white/0 group-hover:text-white/80 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

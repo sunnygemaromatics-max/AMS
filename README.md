@@ -1,11 +1,11 @@
 # Asset Management System (AMS)
 
 Enterprise asset management web application — track, allocate, audit and
-report on hardware, software licenses, infrastructure and consumables across
-multiple locations and departments. Built for The Studio Infinito by
-Personify Crafters.
+report on hardware, software licenses, credentials, infrastructure and
+consumables across multiple locations and departments. Deployed for
+Gem Aromatics.
 
-**Production URL:** https://ams.thestudioinfinito.com
+**Production URL:** https://ams.gemaromatics.com
 
 ---
 
@@ -147,4 +147,4 @@ See [`docs/BACKUP_AND_RESTORE.md`](docs/BACKUP_AND_RESTORE.md).
 
 ## License & copyright
 
-© Personify Crafters — All Rights Reserved.
+© Gem Aromatics — All Rights Reserved.

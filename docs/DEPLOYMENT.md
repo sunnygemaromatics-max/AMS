@@ -40,7 +40,7 @@ sub-folder (addon domain or sub-account), update `server-dir` in
 ### 3. DNS
 
 Point your domain's A / CNAME record to your Hostinger nameservers (already
-done for `ams.thestudioinfinito.com`). The GitHub Pages mirror uses the
+done for `ams.gemaromatics.com`). The GitHub Pages mirror uses the
 `CNAME` file at the repo root; remove that file if you do not want the
 mirror.
 

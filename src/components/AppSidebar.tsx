@@ -23,7 +23,6 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
-import { TsiLogo } from "@/components/TsiLogo";
 import {
   Sidebar,
   SidebarContent,
@@ -86,17 +85,14 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border/50">
         {!collapsed && (
-          <div className="flex items-center gap-3 animate-fade-in">
-            <TsiLogo size={36} />
-            <div>
-              <p className="font-bold text-sm tsi-gradient-text leading-tight">AMS</p>
-              <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Asset Management</p>
-            </div>
+          <div className="animate-fade-in">
+            <p className="font-bold text-base tsi-gradient-text leading-tight">Gem Aromatics</p>
+            <p className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60 mt-0.5">Asset Management</p>
           </div>
         )}
         {collapsed && (
           <div className="flex justify-center animate-fade-in">
-            <TsiLogo size={32} />
+            <span className="font-bold text-base tsi-gradient-text">GA</span>
           </div>
         )}
       </SidebarHeader>
@@ -181,10 +177,10 @@ export function AppSidebar() {
         {!collapsed && (
           <div className="space-y-0.5">
             <p className="text-[10px] font-semibold uppercase tracking-widest tsi-gradient-text">
-              Personify Crafters
+              Gem Aromatics
             </p>
             <p className="text-[10px] text-sidebar-foreground/40">
-              v2.0 Enterprise AMS
+              v1.0 Enterprise AMS
             </p>
           </div>
         )}

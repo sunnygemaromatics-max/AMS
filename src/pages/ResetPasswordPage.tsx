@@ -71,9 +71,9 @@ export default function ResetPasswordPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="h-12 w-12 rounded-xl bg-emerald-500 flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-black text-sm">TSI</span>
+            <span className="text-white font-black text-sm">GA</span>
           </div>
-          <p className="text-slate-400 text-xs">The Studio Infinito · Asset Management System</p>
+          <p className="text-slate-400 text-xs">Gem Aromatics · Asset Management System</p>
         </div>
 
         <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8">
@@ -174,7 +174,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <p className="text-center text-xs text-slate-700 mt-6">
-          © Personify Crafters – All Rights Reserved
+          © Gem Aromatics — All Rights Reserved
         </p>
       </div>
     </div>

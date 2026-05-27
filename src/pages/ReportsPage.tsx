@@ -32,7 +32,7 @@ function exportPDF(title: string, headers: string[], rows: (string | number | nu
   const doc = new jsPDF({ orientation: "landscape" });
   doc.setFontSize(14); doc.text(title, 14, 16);
   doc.setFontSize(9); doc.setTextColor(100);
-  doc.text(`Generated: ${format(new Date(), "dd MMM yyyy HH:mm")} — TSI Asset Management`, 14, 23);
+  doc.text(`Generated: ${format(new Date(), "dd MMM yyyy HH:mm")} — Gem Aromatics AMS`, 14, 23);
   autoTable(doc, {
     head: [headers],
     body: rows.map(r => r.map(v => v ?? "—")),

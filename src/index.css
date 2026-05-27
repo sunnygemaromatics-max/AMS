@@ -4,103 +4,105 @@
 
 @layer base {
   :root {
-    /* TSI Elegant Light Theme — soft lavender/rose/peach palette from the logo */
-    --background: 250 100% 99%;
-    --foreground: 260 35% 15%;
+    /* Gem Aromatics — botanical palette: deep teal/emerald + warm amber gold */
+    --background: 160 25% 99%;
+    --foreground: 175 35% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 260 35% 15%;
+    --card-foreground: 175 35% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 35% 15%;
+    --popover-foreground: 175 35% 12%;
 
-    --primary: 265 55% 50%;
+    /* Primary — deep teal */
+    --primary: 174 75% 32%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 280 30% 96%;
-    --secondary-foreground: 260 35% 20%;
+    --secondary: 170 25% 95%;
+    --secondary-foreground: 175 35% 18%;
 
-    --muted: 270 25% 95%;
-    --muted-foreground: 260 12% 50%;
+    --muted: 165 20% 95%;
+    --muted-foreground: 175 12% 40%;
 
-    --accent: 340 70% 65%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent — warm amber gold */
+    --accent: 38 90% 50%;
+    --accent-foreground: 175 35% 12%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 270 30% 90%;
-    --input: 270 30% 90%;
-    --ring: 265 55% 50%;
+    --border: 170 20% 88%;
+    --input: 170 20% 88%;
+    --ring: 174 75% 32%;
 
     --radius: 0.75rem;
 
-    /* Sidebar — soft elegant white-glass with TSI purple accents */
-    --sidebar-background: 270 50% 98%;
-    --sidebar-foreground: 260 30% 25%;
-    --sidebar-primary: 265 55% 50%;
+    /* Sidebar — soft cream with teal accents */
+    --sidebar-background: 165 30% 98%;
+    --sidebar-foreground: 175 30% 22%;
+    --sidebar-primary: 174 75% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 280 50% 95%;
-    --sidebar-accent-foreground: 265 55% 35%;
-    --sidebar-border: 270 30% 90%;
-    --sidebar-ring: 265 55% 50%;
+    --sidebar-accent: 170 35% 94%;
+    --sidebar-accent-foreground: 174 75% 25%;
+    --sidebar-border: 170 20% 88%;
+    --sidebar-ring: 174 75% 32%;
 
     /* Status tokens */
-    --success: 152 60% 45%;
+    --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
-    --warning: 35 95% 55%;
-    --warning-foreground: 0 0% 100%;
-    --info: 220 80% 60%;
+    --warning: 38 90% 50%;
+    --warning-foreground: 175 35% 12%;
+    --info: 200 80% 45%;
     --info-foreground: 0 0% 100%;
 
-    /* KPI gradient stops — direct from logo (purple → rose → peach) */
-    --kpi-1: 265 55% 50%;   /* deep purple */
-    --kpi-2: 320 65% 60%;   /* magenta-pink */
-    --kpi-3: 340 75% 65%;   /* rose */
-    --kpi-4: 20 85% 70%;    /* peach */
+    /* KPI gradient stops — teal → emerald → gold (botanical sweep) */
+    --kpi-1: 174 75% 32%;   /* deep teal */
+    --kpi-2: 165 70% 38%;   /* emerald */
+    --kpi-3: 48  90% 48%;   /* mustard gold */
+    --kpi-4: 32  85% 55%;   /* amber */
 
-    /* TSI signature gradient */
-    --tsi-gradient: linear-gradient(135deg, hsl(265 55% 50%) 0%, hsl(320 65% 60%) 50%, hsl(20 85% 70%) 100%);
-    --tsi-gradient-soft: linear-gradient(135deg, hsl(265 55% 50% / 0.1) 0%, hsl(320 65% 60% / 0.1) 50%, hsl(20 85% 70% / 0.1) 100%);
+    /* Brand signature gradient (CSS class name kept for compatibility) */
+    --tsi-gradient:      linear-gradient(135deg, hsl(174 75% 32%) 0%, hsl(165 70% 38%) 50%, hsl(38 90% 50%) 100%);
+    --tsi-gradient-soft: linear-gradient(135deg, hsl(174 75% 32% / 0.1) 0%, hsl(165 70% 38% / 0.1) 50%, hsl(38 90% 50% / 0.1) 100%);
   }
 
   .dark {
-    --background: 260 30% 8%;
-    --foreground: 270 20% 92%;
+    --background: 175 30% 8%;
+    --foreground: 165 20% 92%;
 
-    --card: 260 25% 11%;
-    --card-foreground: 270 20% 92%;
+    --card: 175 25% 11%;
+    --card-foreground: 165 20% 92%;
 
-    --popover: 260 25% 11%;
-    --popover-foreground: 270 20% 92%;
+    --popover: 175 25% 11%;
+    --popover-foreground: 165 20% 92%;
 
-    --primary: 265 70% 70%;
-    --primary-foreground: 260 30% 8%;
+    --primary: 174 70% 55%;
+    --primary-foreground: 175 30% 8%;
 
-    --secondary: 260 20% 16%;
-    --secondary-foreground: 270 20% 92%;
+    --secondary: 175 20% 16%;
+    --secondary-foreground: 165 20% 92%;
 
-    --muted: 260 15% 18%;
-    --muted-foreground: 270 10% 65%;
+    --muted: 175 15% 18%;
+    --muted-foreground: 165 10% 65%;
 
-    --accent: 340 75% 70%;
-    --accent-foreground: 260 30% 8%;
+    --accent: 38 90% 60%;
+    --accent-foreground: 175 30% 8%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 20% 20%;
-    --input: 260 20% 20%;
-    --ring: 265 70% 70%;
+    --border: 175 20% 20%;
+    --input: 175 20% 20%;
+    --ring: 174 70% 55%;
 
-    --sidebar-background: 260 30% 6%;
-    --sidebar-foreground: 270 20% 85%;
-    --sidebar-primary: 265 70% 70%;
-    --sidebar-primary-foreground: 260 30% 8%;
-    --sidebar-accent: 260 20% 14%;
-    --sidebar-accent-foreground: 270 20% 92%;
-    --sidebar-border: 260 20% 18%;
-    --sidebar-ring: 265 70% 70%;
+    --sidebar-background: 175 30% 6%;
+    --sidebar-foreground: 165 20% 85%;
+    --sidebar-primary: 174 70% 55%;
+    --sidebar-primary-foreground: 175 30% 8%;
+    --sidebar-accent: 175 20% 14%;
+    --sidebar-accent-foreground: 165 20% 92%;
+    --sidebar-border: 175 20% 18%;
+    --sidebar-ring: 174 70% 55%;
   }
 }
 
@@ -118,8 +120,8 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     /* Subtle ambient gradient — no fixed attachment (it forces full repaint on scroll) */
     background-image:
-      radial-gradient(at 12% 8%, hsl(265 55% 50% / 0.04) 0px, transparent 50%),
-      radial-gradient(at 88% 92%, hsl(340 70% 65% / 0.04) 0px, transparent 50%);
+      radial-gradient(at 12% 8%, hsl(174 75% 32% / 0.04) 0px, transparent 50%),
+      radial-gradient(at 88% 92%, hsl(38 90% 50% / 0.04) 0px, transparent 50%);
     min-height: 100vh;
   }
 
@@ -133,8 +135,8 @@
   }
 
   ::selection {
-    background: hsl(265 55% 50% / 0.25);
-    color: hsl(260 35% 15%);
+    background: hsl(174 75% 32% / 0.25);
+    color: hsl(175 35% 12%);
   }
 
   /* Custom scrollbar */
@@ -146,27 +148,27 @@
     background: hsl(var(--muted) / 0.3);
   }
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, hsl(265 55% 60% / 0.5), hsl(340 70% 65% / 0.5));
+    background: linear-gradient(135deg, hsl(174 75% 40% / 0.5), hsl(38 90% 50% / 0.5));
     border-radius: 5px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, hsl(265 55% 60% / 0.8), hsl(340 70% 65% / 0.8));
+    background: linear-gradient(135deg, hsl(174 75% 40% / 0.8), hsl(38 90% 50% / 0.8));
   }
 }
 
 @layer utilities {
-  /* === KPI Gradients (TSI logo palette) === */
+  /* === KPI Gradients (Gem Aromatics botanical palette) === */
   .kpi-gradient-1 {
-    background: linear-gradient(135deg, hsl(265 55% 50%) 0%, hsl(280 60% 55%) 100%);
+    background: linear-gradient(135deg, hsl(174 75% 32%) 0%, hsl(174 75% 42%) 100%);
   }
   .kpi-gradient-2 {
-    background: linear-gradient(135deg, hsl(320 65% 60%) 0%, hsl(340 70% 65%) 100%);
+    background: linear-gradient(135deg, hsl(165 70% 38%) 0%, hsl(160 65% 45%) 100%);
   }
   .kpi-gradient-3 {
-    background: linear-gradient(135deg, hsl(340 75% 65%) 0%, hsl(355 80% 70%) 100%);
+    background: linear-gradient(135deg, hsl(48 90% 48%) 0%, hsl(42 92% 52%) 100%);
   }
   .kpi-gradient-4 {
-    background: linear-gradient(135deg, hsl(20 85% 70%) 0%, hsl(35 90% 70%) 100%);
+    background: linear-gradient(135deg, hsl(32 85% 55%) 0%, hsl(25 88% 58%) 100%);
   }
 
   /* === Glass Morphism === */
@@ -174,41 +176,41 @@
      so scroll/animation stay smooth even on low-power devices. */
   .glass {
     background: hsl(0 0% 100% / 0.92);
-    border: 1px solid hsl(270 30% 92%);
-    box-shadow: 0 4px 16px hsl(265 55% 50% / 0.06);
+    border: 1px solid hsl(170 20% 90%);
+    box-shadow: 0 4px 16px hsl(174 75% 32% / 0.06);
   }
   .glass-strong {
     background: hsl(0 0% 100% / 0.98);
-    border: 1px solid hsl(270 30% 90%);
-    box-shadow: 0 4px 16px hsl(265 55% 50% / 0.08);
+    border: 1px solid hsl(170 20% 88%);
+    box-shadow: 0 4px 16px hsl(174 75% 32% / 0.08);
   }
   .glass-card {
     background: hsl(0 0% 100%);
-    border: 1px solid hsl(270 30% 94%);
+    border: 1px solid hsl(170 20% 92%);
     box-shadow:
-      0 1px 2px hsl(265 55% 50% / 0.04),
-      0 2px 8px hsl(265 55% 50% / 0.04);
+      0 1px 2px hsl(174 75% 32% / 0.04),
+      0 2px 8px hsl(174 75% 32% / 0.04);
     transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
   .glass-card:hover {
     box-shadow:
-      0 4px 12px hsl(265 55% 50% / 0.08),
-      0 8px 20px hsl(265 55% 50% / 0.08);
+      0 4px 12px hsl(174 75% 32% / 0.08),
+      0 8px 20px hsl(174 75% 32% / 0.08);
     transform: translateY(-2px);
-    border-color: hsl(265 55% 70% / 0.4);
+    border-color: hsl(174 75% 45% / 0.4);
   }
   .dark .glass {
-    background: hsl(260 25% 11% / 0.95);
-    border: 1px solid hsl(260 25% 20%);
+    background: hsl(175 25% 11% / 0.95);
+    border: 1px solid hsl(175 20% 20%);
     box-shadow: 0 4px 16px hsl(0 0% 0% / 0.3);
   }
   .dark .glass-strong {
-    background: hsl(260 25% 11% / 0.98);
-    border: 1px solid hsl(260 25% 22%);
+    background: hsl(175 25% 11% / 0.98);
+    border: 1px solid hsl(175 20% 22%);
   }
   .dark .glass-card {
-    background: hsl(260 25% 12%);
-    border: 1px solid hsl(260 25% 20%);
+    background: hsl(175 25% 12%);
+    border: 1px solid hsl(175 20% 20%);
   }
 
   /* === TSI Brand Gradient Utilities === */
@@ -271,8 +273,8 @@
     50%      { background-position: 100% 50%; }
   }
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 hsl(265 55% 50% / 0.4); }
-    50%      { box-shadow: 0 0 0 12px hsl(265 55% 50% / 0); }
+    0%, 100% { box-shadow: 0 0 0 0 hsl(174 75% 32% / 0.4); }
+    50%      { box-shadow: 0 0 0 12px hsl(174 75% 32% / 0); }
   }
 
   /* One-shot entrance animations — no perf cost after they finish */
@@ -311,7 +313,7 @@
   }
   .hover-lift:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 30px hsl(265 55% 50% / 0.12);
+    box-shadow: 0 10px 30px hsl(174 75% 32% / 0.12);
   }
 
   /* Subtle gradient ring on focus/hover for chrome controls */
@@ -337,8 +339,8 @@
   .dark .glass-card:hover {
     box-shadow:
       0 4px 12px hsl(0 0% 0% / 0.3),
-      0 8px 20px hsl(265 70% 50% / 0.18);
-    border-color: hsl(265 70% 60% / 0.4);
+      0 8px 20px hsl(174 75% 35% / 0.18);
+    border-color: hsl(174 75% 50% / 0.4);
   }
 }
 

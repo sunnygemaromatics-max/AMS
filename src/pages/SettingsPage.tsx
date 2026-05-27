@@ -130,8 +130,8 @@ function CompaniesTab() {
         onSave={handleSave}
         isPending={createCompany.isPending || updateCompany.isPending}
       >
-        <Field label="Name *"><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="The Studio Infinito" /></Field>
-        <Field label="Code *"><Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="TSI" maxLength={10} /></Field>
+        <Field label="Name *"><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Gem Aromatics" /></Field>
+        <Field label="Code *"><Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value }))} placeholder="GA" maxLength={10} /></Field>
         <Field label="Address"><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></Field>
       </EntityDialog>
     </div>
