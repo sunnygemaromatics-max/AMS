@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute, AdminRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { supabaseConfigError } from "@/integrations/supabase/client";
 
 // Eagerly load auth pages (not behind auth wall)
 import AuthPage from "./pages/AuthPage";
@@ -58,10 +59,36 @@ function PageLoader() {
   );
 }
 
+function ConfigErrorScreen() {
+  return (
+    <div className="min-h-screen bg-background px-6 py-10">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-3xl items-center justify-center">
+        <div className="w-full rounded-2xl border bg-card p-8 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Setup Required</p>
+          <h1 className="mt-3 text-3xl font-bold text-foreground">The app cannot start until Supabase is configured.</h1>
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            {supabaseConfigError}
+          </p>
+          <div className="mt-6 rounded-xl bg-muted p-4 text-sm text-muted-foreground">
+            <p>1. Copy <code>.env.example</code> to <code>.env</code> in <code>AMS-live</code>.</p>
+            <p>2. Set <code>VITE_SUPABASE_URL</code>.</p>
+            <p>3. Set <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>.</p>
+            <p>4. Restart the Vite dev server.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="ams-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        {supabaseConfigError ? (
+          <ConfigErrorScreen />
+        ) : (
+        <>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -107,6 +134,8 @@ const App = () => (
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        </>
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>

@@ -75,6 +75,7 @@ export default function BinCardsPage() {
                   <BinField label="SAP Code" value={(selectedAsset as any).sap_code} />
                   <BinField label="Bin Card No." value={String((selectedAsset as any).bin_card_no)} />
                   <div className="col-span-2"><BinField label="System (Asset) Info" value={(selectedAsset as any).system_info || '—'} /></div>
+                  {(selectedAsset as any).folder_access_details && <div className="col-span-2"><BinField label="Folder Access Details" value={(selectedAsset as any).folder_access_details} /></div>}
                   <BinField label="S.No. (TAG)" value={(selectedAsset as any).serial_number} />
                   <BinField label="Vendor" value={(selectedAsset as any).vendors?.name} />
                   <BinField label="Purchase Bill No." value={(selectedAsset as any).purchase_bill_no} />

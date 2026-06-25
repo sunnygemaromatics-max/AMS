@@ -106,6 +106,7 @@ export default function AssetDetailPage() {
                 {asset.mobile_number && <Detail label="Mobile Number" value={asset.mobile_number} />}
                 {asset.sim_provider && <Detail label="SIM Provider" value={asset.sim_provider} />}
                 {asset.license_key && <Detail label="License Key" value={asset.license_key} />}
+                {asset.folder_access_details && <Detail label="Folder Access Details" value={asset.folder_access_details} />}
               </CardContent>
             </Card>
 
@@ -213,6 +214,7 @@ export default function AssetDetailPage() {
                 <Detail label="SAP Code" value={asset.sap_code} />
                 <Detail label="Bin Card No." value={String(asset.bin_card_no)} />
                 <div className="col-span-2"><Detail label="System (Asset) Info" value={asset.system_info || '—'} /></div>
+                {asset.folder_access_details && <div className="col-span-2"><Detail label="Folder Access Details" value={asset.folder_access_details} /></div>}
                 <Detail label="S.No. (TAG)" value={asset.serial_number} />
                 <Detail label="Vendor" value={asset.vendors?.name} />
                 <Detail label="Purchase Bill No." value={asset.purchase_bill_no} />

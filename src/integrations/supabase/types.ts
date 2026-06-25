@@ -108,6 +108,7 @@ export type Database = {
           current_location_id: string | null
           department_id: string | null
           depreciation_rate: number | null
+          folder_access_details: string | null
           id: string
           imei: string | null
           imei2: string | null
@@ -147,6 +148,7 @@ export type Database = {
           current_location_id?: string | null
           department_id?: string | null
           depreciation_rate?: number | null
+          folder_access_details?: string | null
           id?: string
           imei?: string | null
           imei2?: string | null
@@ -186,6 +188,7 @@ export type Database = {
           current_location_id?: string | null
           department_id?: string | null
           depreciation_rate?: number | null
+          folder_access_details?: string | null
           id?: string
           imei?: string | null
           imei2?: string | null

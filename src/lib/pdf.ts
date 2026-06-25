@@ -114,6 +114,7 @@ function renderBinCardSection(doc: jsPDF, asset: any, transactions: any[], binEn
     ["Status", asset.status, "Cost", asset.purchase_cost ? `₹${Number(asset.purchase_cost).toLocaleString()}` : "-"],
     ["Location", asset.locations?.name || "-", "Department", asset.departments?.name || "-"],
     ["Assigned to", asset.employees?.name || "Unassigned", "Vendor", asset.vendors?.name || "-"],
+    ["Folder Access", asset.folder_access_details || "-", "License Key", asset.license_key || "-"],
   ];
   autoTable(doc, {
     startY: y, body: details, theme: "plain",

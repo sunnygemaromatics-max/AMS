@@ -113,8 +113,37 @@ const QUICK_FILTERS = [
   { label: 'Mobile Devices', status: 'all', subtype: 'mobile_device' },
 ];
 
+const FOLDER_ACCESS_SUBTYPES = new Set([
+  'ms_office_license',
+  'sap_license',
+  'gmail_license',
+  'antivirus',
+  'rdp_license',
+  'cosec_license',
+  'software_license',
+  'email_account',
+  'os_license',
+  'database_license',
+  'cloud_subscription',
+  'saas_subscription',
+  'ssl_certificate',
+  'domain',
+  'vpn_license',
+]);
+
 // Dynamic fields based on asset subtype
 function DynamicFields({ subtype, form, setForm }: { subtype: string; form: any; setForm: any }) {
+  const folderAccessField = FOLDER_ACCESS_SUBTYPES.has(subtype) ? (
+    <div className="col-span-2">
+      <Label>Folder Access Details</Label>
+      <Textarea
+        value={form.folder_access_details || ''}
+        onChange={e => setForm((f: any) => ({ ...f, folder_access_details: e.target.value }))}
+        placeholder="Shared folder names, drive path, access level, approval notes, who should use it"
+      />
+    </div>
+  ) : null;
+
   if (subtype === 'mobile_device' || subtype === 'tablet') {
     return (
       <>
@@ -130,6 +159,7 @@ function DynamicFields({ subtype, form, setForm }: { subtype: string; form: any;
       <>
         <div><Label>License Key</Label><Input value={form.license_key || ''} onChange={e => setForm((f: any) => ({ ...f, license_key: e.target.value }))} /></div>
         <div><Label>Warranty/Expiry End</Label><Input type="date" value={form.warranty_end || ''} onChange={e => setForm((f: any) => ({ ...f, warranty_end: e.target.value }))} /></div>
+        {folderAccessField}
       </>
     );
   }
@@ -138,6 +168,7 @@ function DynamicFields({ subtype, form, setForm }: { subtype: string; form: any;
       <>
         <div><Label>License Key / Email</Label><Input value={form.license_key || ''} onChange={e => setForm((f: any) => ({ ...f, license_key: e.target.value }))} placeholder="user@domain.com" /></div>
         <div><Label>Specifications (Domain)</Label><Input value={form.specifications || ''} onChange={e => setForm((f: any) => ({ ...f, specifications: e.target.value }))} placeholder="gemaromatics.in" /></div>
+        {folderAccessField}
       </>
     );
   }
@@ -148,10 +179,11 @@ function DynamicFields({ subtype, form, setForm }: { subtype: string; form: any;
         <div><Label>Specifications (License Type)</Label><Input value={form.specifications || ''} onChange={e => setForm((f: any) => ({ ...f, specifications: e.target.value }))} placeholder="Professional / Limited" /></div>
         <div><Label>Validity Start</Label><Input type="date" value={form.warranty_start || ''} onChange={e => setForm((f: any) => ({ ...f, warranty_start: e.target.value }))} /></div>
         <div><Label>Validity End</Label><Input type="date" value={form.warranty_end || ''} onChange={e => setForm((f: any) => ({ ...f, warranty_end: e.target.value }))} /></div>
+        {folderAccessField}
       </>
     );
   }
-  return null;
+  return folderAccessField;
 }
 
 export default function AssetsPage() {
@@ -204,7 +236,7 @@ export default function AssetsPage() {
     company_id: '', department_id: '',
     status: 'available' as any, notes: '', warranty_start: '', warranty_end: '',
     asset_subtype: 'other' as any, imei: '', imei2: '', mobile_number: '', sim_provider: '',
-    license_key: '', specifications: '',
+    license_key: '', specifications: '', folder_access_details: '',
     parent_asset_id: parentFromUrl ?? '',
     custom_fields: {} as Record<string, unknown>,
   };
@@ -274,6 +306,7 @@ export default function AssetsPage() {
         imei: form.imei || null, imei2: form.imei2 || null,
         mobile_number: form.mobile_number || null, sim_provider: form.sim_provider || null,
         license_key: form.license_key || null, specifications: form.specifications || null,
+        folder_access_details: form.folder_access_details || null,
         parent_asset_id: form.parent_asset_id || null,
         custom_fields: form.custom_fields ?? {},
       } as any);
@@ -315,6 +348,7 @@ export default function AssetsPage() {
       sim_provider:        asset.sim_provider ?? '',
       license_key:         asset.license_key ?? '',
       specifications:      asset.specifications ?? '',
+      folder_access_details: asset.folder_access_details ?? '',
       parent_asset_id:     (asset as any).parent_asset_id ?? '',
       custom_fields:       ((asset as any).custom_fields ?? {}) as Record<string, unknown>,
     });
@@ -345,6 +379,7 @@ export default function AssetsPage() {
         imei: form.imei || null, imei2: form.imei2 || null,
         mobile_number: form.mobile_number || null, sim_provider: form.sim_provider || null,
         license_key: form.license_key || null, specifications: form.specifications || null,
+        folder_access_details: form.folder_access_details || null,
         parent_asset_id: form.parent_asset_id || null,
         custom_fields: form.custom_fields ?? {},
       } as any);

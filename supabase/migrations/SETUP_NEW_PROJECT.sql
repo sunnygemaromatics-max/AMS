@@ -140,6 +140,7 @@ CREATE TABLE IF NOT EXISTS public.assets (
   mobile_number TEXT,
   sim_provider TEXT,
   license_key TEXT,
+  folder_access_details TEXT,
   brand TEXT,
   model TEXT,
   specifications TEXT,
