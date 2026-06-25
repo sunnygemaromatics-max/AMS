@@ -37,7 +37,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          cname: ams.thestudioinfinito.com
+          cname: ams.gemaromatics.com
 
       # ── Detect whether Hostinger FTP secrets are configured ────────────────
       # GitHub Actions can't reference secrets directly in `if:` conditions,
